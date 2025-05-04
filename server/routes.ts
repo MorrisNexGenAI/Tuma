@@ -589,6 +589,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to toggle service availability" });
     }
   });
+  
+  // Analytics endpoints
+  
+  // Track analytics event 
+  app.post("/api/analytics/track", async (req, res) => {
+    try {
+      const { serviceId, eventType, data = {}, userInfo = {} } = req.body;
+      
+      if (!serviceId || !eventType) {
+        return res.status(400).json({ message: "serviceId and eventType are required" });
+      }
+      
+      const event = await storage.trackEvent(
+        parseInt(serviceId), 
+        eventType, 
+        data,
+        userInfo
+      );
+      
+      res.status(200).json({ success: true, event });
+    } catch (error) {
+      console.error("Track event error:", error);
+      // Still return 200 status for analytics - don't block user experience
+      res.status(200).json({ success: false, message: "Failed to track event" });
+    }
+  });
+  
+  // Get analytics data for creator's service
+  app.get("/api/analytics", requireAuth, async (req, res) => {
+    try {
+      const creatorId = req.session.creatorId as number;
+      const { timeframe = "week" } = req.query;
+      
+      // Get the creator's service
+      const service = await storage.getServiceByCreatorId(creatorId);
+      
+      if (!service) {
+        return res.status(404).json({ message: "Service not found" });
+      }
+      
+      // Get analytics data
+      const analytics = await storage.getServiceAnalytics(
+        service.id, 
+        timeframe as "week" | "month" | "all"
+      );
+      
+      res.status(200).json(analytics);
+    } catch (error) {
+      console.error("Get analytics error:", error);
+      res.status(500).json({ message: "Failed to retrieve analytics data" });
+    }
+  });
+  
+  // Get services for logged in creator
+  app.get("/api/services/me", requireAuth, async (req, res) => {
+    try {
+      const creatorId = req.session.creatorId as number;
+      const service = await storage.getServiceByCreatorId(creatorId);
+      
+      if (!service) {
+        return res.status(404).json({ message: "No service found" });
+      }
+      
+      res.status(200).json(service);
+    } catch (error) {
+      console.error("Get creator service error:", error);
+      res.status(500).json({ message: "Failed to get service" });
+    }
+  });
 
   const httpServer = createServer(app);
 

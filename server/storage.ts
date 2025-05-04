@@ -592,6 +592,274 @@ class Storage {
       
     return this.getServiceById(id);
   }
+  
+  // Analytics methods
+  async trackEvent(serviceId: number, eventType: string, data: Record<string, any> = {}, userInfo: Record<string, any> = {}) {
+    try {
+      // Generate a session ID if not provided
+      const sessionId = userInfo.sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+      
+      // Insert event into analytics_events table
+      const [event] = await db.insert(analyticsEvents).values({
+        serviceId,
+        eventType,
+        eventData: JSON.stringify(data),
+        userLocation: userInfo.location || null,
+        userAgent: userInfo.userAgent || null,
+        sessionId
+      }).returning();
+      
+      // Update service stats
+      await this.updateServiceStats(serviceId, eventType, userInfo);
+      
+      return event;
+    } catch (error) {
+      console.error("Error tracking event:", error);
+      // Don't throw - analytics errors shouldn't break the main application flow
+      return null;
+    }
+  }
+  
+  async updateServiceStats(serviceId: number, eventType: string, userInfo: Record<string, any> = {}) {
+    try {
+      // Check if stats record exists for this service
+      const existing = await db.query.serviceStats.findFirst({
+        where: eq(serviceStats.serviceId, serviceId)
+      });
+      
+      const today = new Date();
+      const dayKey = format(today, 'yyyy-MM-dd');
+      const hourKey = format(today, 'HH');
+      const location = userInfo.location || 'unknown';
+      
+      if (!existing) {
+        // Create new stats record
+        const initialStats = {
+          totalViews: eventType === 'view' ? 1 : 0,
+          contactClicks: eventType === 'contact_click' ? 1 : 0,
+          viewsByDay: JSON.stringify({ [dayKey]: 1 }),
+          viewsByHour: JSON.stringify({ [hourKey]: 1 }),
+          locationBreakdown: JSON.stringify({ [location]: 1 }),
+        };
+        
+        await db.insert(serviceStats).values({
+          serviceId,
+          ...initialStats
+        });
+        
+        return;
+      }
+      
+      // Update existing stats
+      let updates: Record<string, any> = {};
+      
+      // Update total counters
+      if (eventType === 'view') {
+        updates.totalViews = (existing.totalViews || 0) + 1;
+      } else if (eventType === 'contact_click') {
+        updates.contactClicks = (existing.contactClicks || 0) + 1;
+      }
+      
+      // Update daily views
+      if (eventType === 'view') {
+        const viewsByDay = existing.viewsByDay ? JSON.parse(existing.viewsByDay) : {};
+        viewsByDay[dayKey] = (viewsByDay[dayKey] || 0) + 1;
+        updates.viewsByDay = JSON.stringify(viewsByDay);
+      }
+      
+      // Update hourly views
+      if (eventType === 'view') {
+        const viewsByHour = existing.viewsByHour ? JSON.parse(existing.viewsByHour) : {};
+        viewsByHour[hourKey] = (viewsByHour[hourKey] || 0) + 1;
+        updates.viewsByHour = JSON.stringify(viewsByHour);
+      }
+      
+      // Update location breakdown
+      if (location) {
+        const locationBreakdown = existing.locationBreakdown ? JSON.parse(existing.locationBreakdown) : {};
+        locationBreakdown[location] = (locationBreakdown[location] || 0) + 1;
+        updates.locationBreakdown = JSON.stringify(locationBreakdown);
+      }
+      
+      // Update lastUpdated timestamp
+      updates.lastUpdated = new Date();
+      
+      // Apply updates
+      await db.update(serviceStats)
+        .set(updates)
+        .where(eq(serviceStats.id, existing.id));
+    } catch (error) {
+      console.error("Error updating service stats:", error);
+      // Don't throw - analytics errors shouldn't break the main application flow
+    }
+  }
+  
+  async getServiceAnalytics(serviceId: number, timeframe: 'week' | 'month' | 'all' = 'week') {
+    try {
+      // Get service stats
+      const stats = await db.query.serviceStats.findFirst({
+        where: eq(serviceStats.serviceId, serviceId)
+      });
+      
+      if (!stats) {
+        // Return empty analytics data
+        return {
+          viewsHistory: [],
+          totalViews: 0,
+          contactClicks: 0,
+          viewsGrowth: 0,
+          peakHours: [],
+          popularDays: [],
+          locationBreakdown: []
+        };
+      }
+      
+      // Parse JSON data
+      const viewsByDay = stats.viewsByDay ? JSON.parse(stats.viewsByDay) : {};
+      const viewsByHour = stats.viewsByHour ? JSON.parse(stats.viewsByHour) : {};
+      const locationData = stats.locationBreakdown ? JSON.parse(stats.locationBreakdown) : {};
+      
+      // Current date for period calculations
+      const today = new Date();
+      
+      // Calculate date range based on timeframe
+      let startDate = today;
+      if (timeframe === 'week') {
+        startDate = subDays(today, 7);
+      } else if (timeframe === 'month') {
+        startDate = subMonths(today, 1);
+      } else {
+        // For 'all', we'll use all available data
+      }
+      
+      // Format start date
+      const startDateStr = timeframe !== 'all' ? format(startDate, 'yyyy-MM-dd') : '';
+      
+      // Filter data by timeframe if needed
+      const filteredDailyData = timeframe === 'all' 
+        ? viewsByDay 
+        : Object.entries(viewsByDay)
+            .filter(([date]) => date >= startDateStr)
+            .reduce((acc, [date, views]) => {
+              acc[date] = views;
+              return acc;
+            }, {} as Record<string, number>);
+      
+      // Format daily views for chart
+      const viewsHistory = Object.entries(filteredDailyData).map(([date, views]) => {
+        // Format date for display (e.g., "Mon", "Tue" for week view)
+        const displayDate = timeframe === 'week' 
+          ? format(new Date(date), 'EEE') 
+          : format(new Date(date), timeframe === 'month' ? 'dd MMM' : 'yyyy-MM-dd');
+          
+        return { date: displayDate, views: Number(views) };
+      });
+      
+      // Sort by date
+      viewsHistory.sort((a, b) => {
+        // This simple comparison might be inadequate for complex date formats
+        // For now, we'll leave it this way and adjust if needed
+        return a.date.localeCompare(b.date);
+      });
+      
+      // Calculate growth percentage compared to previous period
+      const totalCurrentViews = Object.values(filteredDailyData).reduce((sum, views) => sum + (views as number), 0);
+      
+      // Calculate previous period for comparison
+      let prevStartDate = startDate;
+      if (timeframe === 'week') {
+        prevStartDate = subDays(startDate, 7);
+      } else if (timeframe === 'month') {
+        prevStartDate = subMonths(startDate, 1);
+      }
+      
+      const prevEndDateStr = timeframe !== 'all' ? format(subDays(startDate, 1), 'yyyy-MM-dd') : '';
+      const prevStartDateStr = timeframe !== 'all' ? format(prevStartDate, 'yyyy-MM-dd') : '';
+      
+      // Calculate previous period views
+      const prevPeriodViews = timeframe === 'all' 
+        ? 0 // No comparison for all-time 
+        : Object.entries(viewsByDay)
+            .filter(([date]) => date >= prevStartDateStr && date <= prevEndDateStr)
+            .reduce((sum, [_, views]) => sum + (views as number), 0);
+      
+      // Calculate growth percentage
+      const viewsGrowth = prevPeriodViews === 0 
+        ? 100 // If no previous views, consider it 100% growth
+        : Math.round(((totalCurrentViews - prevPeriodViews) / prevPeriodViews) * 100);
+      
+      // Format hourly data for chart
+      const peakHours = Object.entries(viewsByHour).map(([hour, views]) => {
+        // Format hour for display (e.g., "8-10 AM")
+        const hourNum = parseInt(hour);
+        const displayHour = `${hourNum}-${(hourNum + 2) % 24} ${hourNum < 12 ? 'AM' : 'PM'}`;
+        
+        return { hour: displayHour, views: Number(views) };
+      });
+      
+      // Sort by views (descending)
+      peakHours.sort((a, b) => b.views - a.views);
+      
+      // Calculate day of week popularity
+      const dayOfWeekMap: Record<string, number> = {
+        'Sun': 0, 'Mon': 0, 'Tue': 0, 'Wed': 0, 'Thu': 0, 'Fri': 0, 'Sat': 0
+      };
+      
+      // Aggregate views by day of week
+      Object.entries(viewsByDay).forEach(([dateStr, views]) => {
+        try {
+          const date = new Date(dateStr);
+          const dayOfWeek = format(date, 'EEE');
+          dayOfWeekMap[dayOfWeek] = (dayOfWeekMap[dayOfWeek] || 0) + (views as number);
+        } catch (e) {
+          console.error(`Error parsing date: ${dateStr}`, e);
+        }
+      });
+      
+      // Convert to array for chart
+      const popularDays = Object.entries(dayOfWeekMap)
+        .map(([day, views]) => ({ day, views: Number(views) }))
+        .sort((a, b) => b.views - a.views); // Sort by popularity
+      
+      // Format location data
+      const totalLocationViews = Object.values(locationData).reduce((sum, views) => sum + (views as number), 0);
+      
+      const locationBreakdown = Object.entries(locationData)
+        .map(([location, views]) => {
+          const percentage = totalLocationViews === 0 
+            ? 0 
+            : Math.round((Number(views) / totalLocationViews) * 100);
+            
+          return { location, percentage };
+        })
+        .sort((a, b) => b.percentage - a.percentage)
+        .slice(0, 5); // Top 5 locations
+      
+      // Return formatted analytics data
+      return {
+        viewsHistory,
+        totalViews: stats.totalViews || 0,
+        contactClicks: stats.contactClicks || 0,
+        viewsGrowth,
+        peakHours,
+        popularDays,
+        locationBreakdown
+      };
+    } catch (error) {
+      console.error("Error retrieving service analytics:", error);
+      
+      // Return empty analytics data on error
+      return {
+        viewsHistory: [],
+        totalViews: 0,
+        contactClicks: 0,
+        viewsGrowth: 0,
+        peakHours: [],
+        popularDays: [],
+        locationBreakdown: []
+      };
+    }
+  }
 }
 
 export const storage = new Storage();
