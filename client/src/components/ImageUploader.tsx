@@ -98,13 +98,15 @@ const ImageUploader = ({
         {existingImages.map((src, index) => (
           <div 
             key={`existing-${index}`} 
-            className="relative h-24 w-24 rounded-md overflow-hidden border border-border group"
+            className="relative h-24 w-24 rounded-md overflow-hidden border border-primary/30 group
+            shadow-sm hover:shadow-md transition-all duration-300 transform hover:scale-105"
           >
             <img 
               src={src} 
               alt={`Existing upload ${index + 1}`} 
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
         ))}
         
@@ -112,17 +114,21 @@ const ImageUploader = ({
         {previews.map((src, index) => (
           <div 
             key={`preview-${index}`} 
-            className="relative h-24 w-24 rounded-md overflow-hidden border border-border group"
+            className="relative h-24 w-24 rounded-md overflow-hidden border border-primary/40 group
+            shadow-sm hover:shadow-md transition-all duration-300 transform hover:scale-105"
           >
             <img 
               src={src} 
               alt={`Upload ${index + 1}`} 
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <button
               type="button"
               onClick={() => removeImage(index)}
-              className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute top-1 right-1 bg-white rounded-full p-1.5 shadow-md 
+              opacity-0 group-hover:opacity-100 transition-all duration-300 
+              hover:bg-red-50 transform translate-y-1 group-hover:translate-y-0"
             >
               <X className="h-3 w-3 text-red-500" />
             </button>
@@ -134,7 +140,10 @@ const ImageUploader = ({
           <button
             type="button"
             onClick={triggerFileInput}
-            className="h-24 w-24 rounded-md border-2 border-dashed border-border flex flex-col items-center justify-center text-text-secondary transition-colors hover:border-primary hover:text-primary"
+            className="h-24 w-24 rounded-md border-2 border-dashed border-border 
+            flex flex-col items-center justify-center text-text-secondary 
+            transition-all duration-300 hover:border-primary hover:text-primary
+            hover:shadow-md hover:scale-105"
           >
             <input
               ref={fileInputRef}
@@ -144,8 +153,10 @@ const ImageUploader = ({
               className="hidden"
               onChange={handleFileChange}
             />
-            <Upload className="h-6 w-6 mb-1" />
-            <span className="text-xs text-center">Upload Image</span>
+            <div className="transform transition-transform duration-300 hover:scale-110">
+              <Upload className="h-6 w-6 mb-1 animate-bounce-slow" />
+            </div>
+            <span className="text-xs text-center font-medium">Upload Image</span>
           </button>
         )}
       </div>

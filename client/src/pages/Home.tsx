@@ -215,26 +215,39 @@ const Home = () => {
               return (
                 <div 
                   key={category.value} 
-                  className="relative group rounded-2xl overflow-hidden shadow-md border border-border hover:shadow-xl transition-all cursor-pointer"
+                  className="relative group rounded-2xl overflow-hidden shadow-lg border border-border 
+                  hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer"
                   onClick={() => handleCategorySelect(category.value)}
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-br ${gradientClasses[index]} opacity-90 group-hover:opacity-95 transition-opacity`}></div>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${gradientClasses[index]} 
+                  opacity-90 group-hover:opacity-100 transition-all duration-300 animate-pulse-glow`}></div>
+                  
+                  {/* Animated background shapes */}
+                  <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/5 transform translate-x-16 -translate-y-16 
+                  group-hover:translate-x-14 group-hover:-translate-y-14 transition-transform duration-700"></div>
+                  <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-white/5 transform -translate-x-12 translate-y-12 
+                  group-hover:-translate-x-10 group-hover:translate-y-10 transition-transform duration-700"></div>
                   
                   <div className="relative z-10 p-6 text-white h-full flex flex-col items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                      <div className="w-8 h-8">
+                    <div className="w-16 h-16 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center mb-4 
+                    transform transition-all duration-500 group-hover:scale-110 group-hover:shadow-glow">
+                      <div className="w-8 h-8 group-hover:scale-110 transition-transform duration-300">
                         {category.icon}
                       </div>
                     </div>
                     
-                    <h3 className="text-xl font-bold mb-1">{category.name}</h3>
-                    <p className="text-white/80 text-sm text-center">
+                    <h3 className="text-xl font-bold mb-1 transform transition-transform duration-300 
+                    group-hover:translate-y-0 group-hover:scale-105">{category.name}</h3>
+                    <p className="text-white/80 text-sm text-center transform transition-all duration-300 
+                    group-hover:text-white/100">
                       Find {category.name.toLowerCase()} in Liberia
                     </p>
                     
-                    <div className="mt-4 bg-white/20 py-1 px-3 rounded-full text-xs inline-flex items-center">
-                      <span>Explore</span>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="ml-1">
+                    <div className="mt-4 bg-white/20 py-1.5 px-4 rounded-full text-xs inline-flex items-center 
+                    group-hover:bg-white/30 transition-all duration-300 transform group-hover:scale-110">
+                      <span className="mr-1 font-medium">Explore</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+                        className="transform transition-transform duration-300 group-hover:translate-x-1">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                       </svg>
                     </div>
