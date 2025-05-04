@@ -360,6 +360,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get creator profile by ID for public viewing
+  app.get("/api/creators/:id", async (req, res) => {
+    try {
+      const creatorId = parseInt(req.params.id);
+      
+      if (isNaN(creatorId)) {
+        return res.status(400).json({ message: "Invalid creator ID" });
+      }
+      
+      // Get creator profile
+      const creator = await storage.getCreatorById(creatorId);
+      
+      if (!creator) {
+        return res.status(404).json({ message: "Creator not found" });
+      }
+      
+      // Get creator's service
+      const service = await storage.getServiceByCreatorId(creatorId);
+      
+      // Increment view count if service exists
+      if (service) {
+        const currentViewCount = service.viewCount || 0;
+        await storage.updateService(service.id, { 
+          viewCount: currentViewCount + 1 
+        });
+        // Update the service object with the new view count
+        service.viewCount = (currentViewCount + 1);
+      }
+      
+      // Return both creator and service data
+      res.status(200).json({ 
+        creator, 
+        service 
+      });
+    } catch (error) {
+      console.error("Get creator by ID error:", error);
+      res.status(500).json({ message: "Failed to get creator profile" });
+    }
+  });
+  
   // Update creator profile
   app.put("/api/creator/profile", requireAuth, async (req, res) => {
     try {
@@ -467,28 +507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get creator profile by ID
-  app.get("/api/creators/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const creatorId = parseInt(id);
-      
-      if (isNaN(creatorId)) {
-        return res.status(400).json({ message: "Invalid creator ID" });
-      }
-      
-      const profile = await storage.getCreatorProfile(creatorId);
-      
-      if (!profile) {
-        return res.status(404).json({ message: "Creator not found" });
-      }
-      
-      res.status(200).json(profile);
-    } catch (error) {
-      console.error("Get creator error:", error);
-      res.status(500).json({ message: "Failed to get creator profile" });
-    }
-  });
+
   
   // Update service details (for detailed descriptions)
   app.patch("/api/services/:id/details", requireAuth, async (req, res) => {
