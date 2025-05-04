@@ -8,6 +8,7 @@ export const creators = pgTable("creators", {
   id: serial("id").primaryKey(),
   phone: text("phone").notNull().unique(),
   password: text("password").notNull(),
+  profileImage: text("profile_image"),
 });
 
 // Services table
@@ -21,6 +22,8 @@ export const services = pgTable("services", {
   county: text("county").notNull(),
   city: text("city").notNull(),
   community: text("community").notNull(),
+  description: text("description"),
+  images: text("images"), // Stored as JSON array of image URLs
   operatingHours: text("operating_hours"),
   available: integer("available").notNull().default(1), // 1 for On, 0 for Off
 });
@@ -87,8 +90,16 @@ export const serviceUpdateSchema = z.object({
   county: z.string().min(1, "County is required"),
   city: z.string().min(1, "City is required"),
   community: z.string().min(1, "Community/area is required"),
+  description: z.string().optional(),
+  images: z.string().optional(), // JSON string of image URLs
   operatingHours: z.string().optional(),
   available: z.boolean().default(true),
 });
 
+// Profile update schema for creator
+export const profileUpdateSchema = z.object({
+  profileImage: z.string().optional(),
+});
+
 export type ServiceUpdate = z.infer<typeof serviceUpdateSchema>;
+export type ProfileUpdate = z.infer<typeof profileUpdateSchema>;
