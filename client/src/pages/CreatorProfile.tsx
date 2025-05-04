@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
-import { useEffect } from "react";
-import { getQueryFn } from "../lib/queryClient";
+import { useEffect, useState } from "react";
+import { getQueryFn, apiRequest } from "../lib/queryClient";
 import { useToast } from "../hooks/use-toast";
-import { Phone, MapPin, Clock, Mail, Tag, Calendar, ExternalLink, ArrowLeft, User2, Star, ToggleLeft, ToggleRight } from "lucide-react";
+import { Phone, MapPin, Clock, Mail, Tag, Calendar, ExternalLink, ArrowLeft, User2, Star, ToggleLeft, ToggleRight, DollarSign } from "lucide-react";
 import ServiceCard from "../components/ServiceCard";
 
 interface CreatorProfileRouteParams {
@@ -14,48 +14,45 @@ const CreatorProfile = () => {
   const { id } = useParams<CreatorProfileRouteParams>();
   const creatorId = parseInt(id);
   const { toast } = useToast();
+  const [profileData, setProfileData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   
-  // Fetch creator profile 
-  const { data, isLoading, error } = useQuery<{ 
-    creator?: {
-      id: number;
-      phone: string; 
-      profileImage?: string;
-      fullName?: string;
-      bio?: string;
-      followers?: number;
-      joinedDate?: string;
-      socialLinks?: string;
-      rating?: string;
+  // Fetch creator profile directly to troubleshoot the issue
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (isNaN(creatorId)) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/creators/${creatorId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log("Creator profile data:", data);
+        setProfileData(data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Creator profile fetch error:", err);
+        toast({
+          title: "Error",
+          description: "Failed to load creator profile",
+          variant: "destructive"
+        });
+        setLoading(false);
+      }
     };
-    service?: any;
-  }>({
-    queryKey: ['/api/creators', creatorId],
-    queryFn: getQueryFn({ on401: "returnNull" }),
-    enabled: !isNaN(creatorId)
-  });
-  
-  // Show error toast if fetch fails
-  useEffect(() => {
-    if (error) {
-      console.error("Creator profile error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load creator profile",
-        variant: "destructive"
-      });
-    }
-  }, [error, toast]);
-  
-  // Log data for debugging
-  useEffect(() => {
-    if (data) {
-      console.log("Creator profile data:", data);
-    }
-  }, [data]);
+    
+    fetchProfile();
+  }, [creatorId, toast]);
   
   // Handle creator not found
-  if (!isLoading && (!data || !data.creator)) {
+  if (!loading && (!profileData || !profileData.creator)) {
     return (
       <div className="container max-w-6xl mx-auto px-4 py-8">
         <div className="bg-white rounded-xl shadow-md p-8 text-center">
@@ -70,8 +67,8 @@ const CreatorProfile = () => {
     );
   }
   
-  const creator = data?.creator;
-  const service = data?.service;
+  const creator = profileData?.creator;
+  const service = profileData?.service;
   
   // Parse social links if available
   let socialLinks: Record<string, string> = {};
@@ -111,7 +108,7 @@ const CreatorProfile = () => {
   
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
-      {isLoading ? (
+      {loading ? (
         // Loading skeleton
         <div className="animate-pulse">
           <div className="flex items-start gap-8 mb-8">
