@@ -202,7 +202,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Search query is required" });
       }
       
-      const results = await storage.searchServices(query);
+      // Normalize query by handling common misspellings and alternative forms
+      let normalizedQuery = query.toLowerCase();
+      
+      // Special case for Tubmanburg/Tubman Burg/Tubman-burg/etc.
+      if (normalizedQuery.includes("tubman") && (
+          normalizedQuery.includes("burg") || 
+          normalizedQuery.includes("berg") ||
+          normalizedQuery.includes("bourg"))) {
+        normalizedQuery = normalizedQuery.replace(/tubman[\s-]?b[ue]r[g|gh]/, "tubmanburg");
+      }
+      
+      // Special case for location names with common variations
+      const locationMappings: Record<string, string[]> = {
+        "montserrado": ["monserrado", "monsterrado", "monrovia county", "greater monrovia"],
+        "monrovia": ["monrovia city", "central monrovia"],
+        "bomi": ["bomi county", "tubmanburg county"],
+        "tubmanburg": ["tubman burg", "tubman-burg", "tubmanberg", "tubman berg"]
+      };
+      
+      // Enhance query with location mappings
+      for (const [location, variations] of Object.entries(locationMappings)) {
+        if (variations.some(v => normalizedQuery.includes(v))) {
+          normalizedQuery = normalizedQuery + " " + location;
+        }
+      }
+      
+      console.log(`Original query: "${query}", Normalized: "${normalizedQuery}"`);
+      
+      const results = await storage.searchServices(normalizedQuery);
       res.status(200).json(results);
     } catch (error) {
       console.error("Search error:", error);

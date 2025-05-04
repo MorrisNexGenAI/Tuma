@@ -52,7 +52,7 @@ const SearchBar = ({
             type="text" 
             id="searchQuery" 
             placeholder={isCompact ? "Search services..." : "e.g. Room in Tubmanburg, Restaurant in Monrovia"} 
-            className={`w-full text-text-primary ${isCompact ? 'p-2' : 'p-3'} border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none`}
+            className={`w-full text-black ${isCompact ? 'p-2' : 'p-3'} border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none`}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />

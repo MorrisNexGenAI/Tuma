@@ -25,7 +25,14 @@ const SearchResults = () => {
 
   // Query search results
   const { data: searchResults = [], isLoading } = useQuery<Service[]>({
-    queryKey: ["/api/search", { query: searchQuery }],
+    queryKey: ["/api/search", searchQuery],
+    queryFn: async () => {
+      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+      return response.json();
+    },
     enabled: searchQuery.length > 0,
   });
 
