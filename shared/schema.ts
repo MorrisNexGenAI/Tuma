@@ -105,6 +105,7 @@ export const serviceUpdateSchema = z.object({
   description: z.string().optional(),
   images: z.string().optional(), // JSON string of image URLs
   operatingHours: z.string().optional(),
+  pricing: z.string().optional(), // Price information (e.g. "$20 USD" or "200-300 LD")
   available: z.boolean().default(true),
 });
 

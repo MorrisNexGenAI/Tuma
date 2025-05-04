@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,11 +24,12 @@ const serviceUpdateSchema = z.object({
   name: z.string().min(3, "Service name must be at least 3 characters"),
   serviceType: z.string().min(1, "Please select a service type"),
   phone: z.string().min(8, "Phone number must be at least 8 digits"),
-  county: z.string().min(1, "Please select a county"),
-  city: z.string().min(1, "Please select a city"),
+  county: z.string().min(1, "County is required"),
+  city: z.string().min(1, "City is required"),
   community: z.string().min(1, "Community/area is required"),
   operatingHours: z.string().optional(),
   description: z.string().optional(),
+  pricing: z.string().optional(),
   available: z.boolean().default(true),
 });
 
@@ -86,6 +87,7 @@ const CreatorPortal = () => {
         community: service.community,
         operatingHours: service.operatingHours || "",
         description: service.description || "",
+        pricing: service.pricing || "",
         available: service.available === 1,
       });
       
