@@ -1,4 +1,5 @@
 import { Service } from "@shared/schema";
+import { MapPin, Clock, Phone, Tag } from "lucide-react";
 
 type ServiceCardProps = {
   service: Service;
@@ -19,47 +20,55 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
   // Format location string
   const location = [community, city, county].filter(Boolean).join(', ');
   const phoneFormatted = phone.startsWith('+') ? phone : `+231 ${phone}`;
-
+  
+  // Generate random gradient background for service type badge
+  const serviceTypeColors = {
+    'Room': 'from-indigo-600 to-blue-400',
+    'Restaurant': 'from-orange-500 to-amber-400',
+    'Barbershop': 'from-purple-600 to-indigo-400',
+    'Salon': 'from-pink-500 to-rose-400'
+  } as {[key: string]: string};
+  
+  const gradientClass = serviceTypeColors[serviceType] || 'from-primary to-secondary';
+  
   return (
     <div className="service-card">
-      <div className="p-4">
-        <div className="flex justify-between items-start mb-2">
+      <div className="p-5">
+        <div className="flex justify-between items-start mb-3">
           <div>
-            <h3 className="font-semibold text-lg">{name}</h3>
-            <p className="text-text-secondary text-sm">{serviceType}</p>
+            <h3 className="font-bold text-xl">{name}</h3>
+            <div className="flex items-center mt-1">
+              <Tag size={14} className="text-primary mr-1.5" />
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full bg-gradient-to-r ${gradientClass} text-white`}>
+                {serviceType}
+              </span>
+            </div>
           </div>
           {available === 1 && (
-            <span className="bg-secondary/20 text-secondary px-2 py-1 rounded-full text-xs font-medium">
+            <span className="bg-secondary/10 text-secondary px-3 py-1 rounded-full text-xs font-medium border border-secondary/20">
               Available
             </span>
           )}
         </div>
         
-        <div className="mb-3">
-          <div className="flex items-center text-text-secondary mb-1">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            </svg>
-            <span className="text-sm">{location}</span>
+        <div className="mb-4 space-y-2 bg-gray-50 p-3 rounded-lg">
+          <div className="flex items-start">
+            <MapPin className="w-4 h-4 mr-2 text-primary mt-0.5 flex-shrink-0" />
+            <span className="text-sm text-text-secondary">{location}</span>
           </div>
-          <div className="flex items-center text-text-secondary">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <span className="text-sm">{operatingHours || 'Hours not specified'}</span>
+          <div className="flex items-start">
+            <Clock className="w-4 h-4 mr-2 text-primary mt-0.5 flex-shrink-0" />
+            <span className="text-sm text-text-secondary">{operatingHours || 'Hours not specified'}</span>
           </div>
         </div>
         
         <a 
           href={`tel:${phone}`}
-          className="btn-primary block py-2 rounded-md font-medium text-center"
+          className="gradient-bg block py-2.5 rounded-md font-medium text-center text-white transition-all hover:shadow-md"
         >
           <div className="flex items-center justify-center">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-            </svg>
-            Call Now: {phoneFormatted}
+            <Phone className="w-4 h-4 mr-2" />
+            {phoneFormatted}
           </div>
         </a>
       </div>

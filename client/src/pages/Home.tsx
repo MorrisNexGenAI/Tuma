@@ -4,12 +4,21 @@ import { Service } from "@shared/schema";
 import { useLocation } from "wouter";
 import ServiceCard from "@/components/ServiceCard";
 import SearchBar from "@/components/SearchBar";
+import { Home as HomeIcon, Utensils, Scissors, Sparkles, Building, MapPin, Star, TrendingUp } from "lucide-react";
 
 // Category info type
 type Category = {
   name: string;
   value: string;
   icon: JSX.Element;
+};
+
+// Featured Location type
+type FeaturedLocation = {
+  name: string;
+  county: string;
+  description: string;
+  image: string;
 };
 
 const Home = () => {
@@ -42,38 +51,38 @@ const Home = () => {
     {
       name: "Rooms",
       value: "Room",
-      icon: (
-        <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-        </svg>
-      ),
+      icon: <HomeIcon className="w-6 h-6 text-white" />,
     },
     {
       name: "Restaurants",
       value: "Restaurant",
-      icon: (
-        <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-        </svg>
-      ),
+      icon: <Utensils className="w-6 h-6 text-white" />,
     },
     {
       name: "Barbershops",
       value: "Barbershop",
-      icon: (
-        <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-      ),
+      icon: <Scissors className="w-6 h-6 text-white" />,
     },
     {
       name: "Salons",
       value: "Salon",
-      icon: (
-        <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"></path>
-        </svg>
-      ),
+      icon: <Sparkles className="w-6 h-6 text-white" />,
+    },
+  ];
+  
+  // Featured locations data
+  const featuredLocations: FeaturedLocation[] = [
+    {
+      name: "Tubmanburg",
+      county: "Bomi County",
+      description: "A vibrant city with a rich history and culture, located in western Liberia.",
+      image: "data:image/svg+xml;utf8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="280" height="150" viewBox="0 0 280 150"><rect width="280" height="150" fill="#f0f4ff"/><rect width="280" height="40" y="110" fill="#6d28d9" opacity="0.2"/><rect width="60" height="70" x="30" y="70" fill="#6d28d9" opacity="0.7"/><rect width="40" height="50" x="110" y="90" fill="#3b82f6" opacity="0.7"/><rect width="70" height="80" x="170" y="60" fill="#6d28d9" opacity="0.5"/><circle cx="240" cy="30" r="15" fill="#f97316" opacity="0.8"/></svg>`),
+    },
+    {
+      name: "Kakata",
+      county: "Margibi County",
+      description: "A growing commercial center known for its markets and educational institutions.",
+      image: "data:image/svg+xml;utf8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="280" height="150" viewBox="0 0 280 150"><rect width="280" height="150" fill="#f0f4ff"/><rect width="280" height="30" y="120" fill="#3b82f6" opacity="0.2"/><rect width="50" height="60" x="40" y="80" fill="#3b82f6" opacity="0.5"/><rect width="30" height="80" x="110" y="60" fill="#6d28d9" opacity="0.6"/><rect width="60" height="70" x="160" y="70" fill="#3b82f6" opacity="0.7"/><circle cx="50" cy="40" r="15" fill="#f97316" opacity="0.8"/></svg>`),
     },
   ];
 
@@ -93,17 +102,22 @@ const Home = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 fade-in">
-      <section className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Find Services in Liberia</h1>
-        <p className="text-text-secondary mb-6">Search for rooms, restaurants, barbershops and more.</p>
-        
-        {/* Search Component */}
-        <SearchBar className="mb-6" />
+      <section className="mb-12">
+        <div className="bg-gradient-to-r from-primary to-secondary rounded-xl shadow-lg p-8 text-white mb-8">
+          <h1 className="text-4xl font-bold mb-3">Find Services in Liberia</h1>
+          <p className="text-white/90 text-lg mb-6">Search for rooms, restaurants, barbershops and more.</p>
+          
+          {/* Search Component */}
+          <SearchBar className="max-w-2xl" />
+        </div>
         
         {/* Popular Categories */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Popular Categories</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="mb-12">
+          <div className="flex items-center mb-6">
+            <h2 className="text-2xl font-bold">Popular Categories</h2>
+            <div className="h-1 w-10 bg-accent ml-3 rounded-full"></div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
             {categories.map((category) => (
               <div 
                 key={category.value} 
@@ -113,7 +127,46 @@ const Home = () => {
                 <div className="category-icon">
                   {category.icon}
                 </div>
-                <span className="font-medium text-sm">{category.name}</span>
+                <span className="font-semibold">{category.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Featured Locations */}
+        <div className="mb-12">
+          <div className="flex items-center mb-6">
+            <h2 className="text-2xl font-bold">Featured Locations</h2>
+            <div className="h-1 w-10 bg-accent ml-3 rounded-full"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {featuredLocations.map((location, index) => (
+              <div key={index} className="bg-white rounded-xl overflow-hidden shadow-md border border-border hover:shadow-lg transition-all">
+                <div className="relative h-40">
+                  <img src={location.image} alt={location.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
+                    <div className="p-4 text-white">
+                      <h3 className="font-bold text-xl">{location.name}</h3>
+                      <div className="flex items-center text-sm">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        <span>{location.county}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <p className="text-text-secondary">{location.description}</p>
+                  <div className="mt-4 flex justify-between items-center">
+                    <span className="flex items-center text-sm text-secondary font-medium">
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                      Explore services in this area
+                    </span>
+                    <span className="flex items-center text-sm text-primary font-medium">
+                      <Star className="h-4 w-4 mr-1 text-yellow-500" /> 
+                      Popular
+                    </span>
+                  </div>
+                </div>
               </div>
             ))}
           </div>

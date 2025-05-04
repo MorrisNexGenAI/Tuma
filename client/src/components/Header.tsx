@@ -2,6 +2,7 @@ import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { MapPin } from "lucide-react";
 
 const Header = () => {
   const [location, navigate] = useLocation();
@@ -32,35 +33,36 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow">
+    <header className="header">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center">
           <Link href="/" className="flex items-center">
-            <span className="text-primary text-2xl font-bold">Tuma</span>
+            <span className="gradient-text text-2xl font-bold">Tuma</span>
+            <MapPin className="ml-1 text-secondary h-5 w-5" />
           </Link>
-          <span className="ml-2 text-xs text-text-secondary">Liberia</span>
+          <span className="ml-2 text-sm text-text-secondary px-2 py-0.5 bg-accent/30 rounded-full">Liberia</span>
         </div>
         <div className="flex items-center space-x-4">
           {creator?.isLoggedIn ? (
             <>
-              <Link href="/creator/portal" className="text-primary font-medium">
+              <Link href="/creator/portal" className="btn-outline">
                 My Service
               </Link>
               <button
                 onClick={handleLogout}
-                className="text-text-secondary font-medium"
+                className="btn-secondary"
               >
                 Log Out
               </button>
             </>
           ) : (
             <>
-              <Link href="/creator/login" className="text-primary font-medium">
+              <Link href="/creator/login" className="btn-outline">
                 Creator Login
               </Link>
               <Link
                 href="/creator/signup"
-                className="bg-primary text-white px-3 py-1.5 rounded-md font-medium text-sm"
+                className="btn-primary"
               >
                 Add Service
               </Link>
