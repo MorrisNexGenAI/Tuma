@@ -269,17 +269,27 @@ const Home = () => {
           <div className="mb-8 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-2xl p-6 border border-primary/10">
             <div className="flex flex-col md:flex-row gap-6 items-center">
               <div className="w-full md:w-1/2">
-                <div className="relative rounded-xl overflow-hidden shadow-md">
+                <div className="relative rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 group">
                   <img 
                     src={featuredLocations[0].image} 
                     alt={featuredLocations[0].name} 
-                    className="w-full h-60 object-cover" 
+                    className="w-full h-60 object-cover transition-transform duration-700 group-hover:scale-105" 
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
-                    <div className="p-5 text-white">
-                      <span className="inline-block px-3 py-1 bg-primary/80 text-white text-xs rounded-full mb-2">Featured Region</span>
-                      <h3 className="font-bold text-2xl drop-shadow-sm">{featuredLocations[0].name}</h3>
-                      <div className="flex items-center text-sm mt-1">
+                  {/* Animated overlay with gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent 
+                  flex items-end opacity-90 group-hover:opacity-100 transition-opacity duration-300">
+                    {/* Animated decorative element */}
+                    <div className="absolute top-4 right-4 w-12 h-12 rounded-full border-2 border-white/30 
+                    opacity-0 group-hover:opacity-100 transition-all duration-500 
+                    transform group-hover:rotate-45"></div>
+                    
+                    <div className="p-5 text-white transform transition-transform duration-300">
+                      <span className="inline-block px-3 py-1 bg-primary/90 text-white text-xs rounded-full mb-2
+                      transform group-hover:translate-y-0 group-hover:scale-105 transition-transform duration-300
+                      shadow-glow">Featured Region</span>
+                      <h3 className="font-bold text-2xl drop-shadow-sm transform transition-all duration-300 
+                      group-hover:translate-x-1">{featuredLocations[0].name}</h3>
+                      <div className="flex items-center text-sm mt-1 opacity-80 group-hover:opacity-100 transition-opacity">
                         <MapPin className="h-4 w-4 mr-1.5" />
                         <span>{featuredLocations[0].county}</span>
                       </div>
@@ -292,11 +302,20 @@ const Home = () => {
                 <p className="text-text-secondary mb-4">{featuredLocations[0].description}</p>
                 <div className="grid grid-cols-2 gap-3">
                   {categories.map(category => (
-                    <div key={category.value} className="flex items-center p-2 bg-white rounded-lg shadow-sm border border-border">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2">
-                        <div className="w-4 h-4 text-primary">{category.icon}</div>
+                    <div 
+                      key={category.value} 
+                      className="flex items-center p-2 bg-white rounded-lg shadow-sm border border-primary/20 
+                      hover:border-primary/50 hover:shadow-md transition-all duration-300 cursor-pointer
+                      transform hover:translate-y-[-2px] group"
+                      onClick={() => navigate(`/search?q=Tubmanburg Bomi ${category.value}`)}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2
+                      group-hover:bg-primary/20 transition-colors duration-300">
+                        <div className="w-4 h-4 text-primary group-hover:scale-110 transition-transform duration-300">{category.icon}</div>
                       </div>
-                      <span className="text-sm">{category.name} in Bomi</span>
+                      <span className="text-sm group-hover:text-primary transition-colors duration-300 font-medium">
+                        {category.name} in Bomi
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -314,31 +333,57 @@ const Home = () => {
           {/* Other locations grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {featuredLocations.slice(1).map((location, index) => (
-              <div key={index} className="bg-white rounded-xl overflow-hidden shadow-md border border-border hover:shadow-lg transition-all">
+              <div 
+                key={index} 
+                className="bg-white rounded-xl overflow-hidden shadow-md border border-border 
+                hover:shadow-xl transition-all duration-300 group hover:border-primary/20 
+                transform hover:translate-y-[-2px]"
+              >
                 <div className="relative h-40">
-                  <img src={location.image} alt={location.name} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
-                    <div className="p-4 text-white">
-                      <h3 className="font-bold text-xl">{location.name}</h3>
-                      <div className="flex items-center text-sm">
-                        <MapPin className="h-4 w-4 mr-1" />
+                  <img 
+                    src={location.image} 
+                    alt={location.name} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent 
+                  flex items-end opacity-90 group-hover:opacity-100 transition-opacity duration-300">
+                    {/* Decorative element */}
+                    {index === 0 && (
+                      <div className="absolute top-3 right-3 bg-yellow-500/90 rounded-full p-1.5
+                      transform rotate-0 group-hover:rotate-12 transition-transform duration-300">
+                        <Star className="h-3.5 w-3.5 text-white" />
+                      </div>
+                    )}
+                    
+                    <div className="p-4 text-white transform transition-transform duration-300 group-hover:translate-y-[-2px]">
+                      <h3 className="font-bold text-xl transition-all duration-300 group-hover:text-shadow-sm">{location.name}</h3>
+                      <div className="flex items-center text-sm transition-all duration-300 group-hover:translate-x-1">
+                        <MapPin className="h-4 w-4 mr-1.5" />
                         <span>{location.county}</span>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="p-4">
-                  <p className="text-text-secondary text-sm line-clamp-2 h-10">{location.description}</p>
+                  <p className="text-text-secondary text-sm line-clamp-2 h-10 group-hover:text-text-primary transition-colors duration-300">
+                    {location.description}
+                  </p>
                   <div className="mt-3 flex justify-between items-center">
                     <button 
-                      className="text-sm text-primary font-medium flex items-center hover:underline" 
+                      className="text-sm text-primary font-medium flex items-center group-hover:text-primary/90 
+                      transition-all duration-300 relative" 
                       onClick={() => navigate(`/search?q=${location.name} ${location.county}`)}
                     >
-                      <TrendingUp className="h-4 w-4 mr-1" />
-                      Explore services
+                      <TrendingUp className="h-4 w-4 mr-1.5 transform transition-transform duration-300 
+                      group-hover:translate-x-0.5" />
+                      <span className="relative">
+                        Explore services
+                        <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary 
+                        group-hover:w-full transition-all duration-500"></span>
+                      </span>
                     </button>
                     {index === 0 && (
-                      <span className="flex items-center text-xs text-primary font-medium">
+                      <span className="flex items-center text-xs text-primary font-medium animate-pulse-glow">
                         <Star className="h-3.5 w-3.5 mr-1 text-yellow-500" /> 
                         Popular
                       </span>
