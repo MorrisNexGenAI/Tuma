@@ -874,6 +874,217 @@ class Storage {
       };
     }
   }
+  
+  // Admin methods
+  async getAdminByPhone(phone: string) {
+    const admin = await db.query.admins.findFirst({
+      where: eq(admins.phone, phone),
+    });
+    
+    return admin;
+  }
+  
+  async createAdmin(fullName: string, phone: string, pin: string) {
+    const [admin] = await db.insert(admins)
+      .values({
+        fullName,
+        phone,
+        pin,
+        role: "admin",
+        isActive: true,
+      })
+      .returning();
+      
+    return admin;
+  }
+  
+  async updateAdminLastLogin(adminId: number) {
+    await db.update(admins)
+      .set({ lastLogin: new Date() })
+      .where(eq(admins.id, adminId));
+  }
+  
+  async createAnnouncement(adminId: number, data: Omit<typeof announcements.$inferInsert, "id" | "adminId" | "createdAt">) {
+    const [announcement] = await db.insert(announcements)
+      .values({
+        ...data,
+        adminId,
+      })
+      .returning();
+      
+    return announcement;
+  }
+  
+  async getActiveAnnouncements() {
+    return db.select()
+      .from(announcements)
+      .where(
+        and(
+          eq(announcements.isActive, true),
+          or(
+            sql`${announcements.endDate} IS NULL`,
+            sql`${announcements.endDate} > NOW()`
+          )
+        )
+      )
+      .orderBy(desc(announcements.createdAt));
+  }
+  
+  async updateAnnouncement(id: number, data: Partial<typeof announcements.$inferInsert>) {
+    await db.update(announcements)
+      .set(data)
+      .where(eq(announcements.id, id));
+  }
+  
+  async deleteAnnouncement(id: number) {
+    await db.delete(announcements)
+      .where(eq(announcements.id, id));
+  }
+  
+  async logAdminAction(adminId: number, action: string, targetType: string, targetId?: number, details?: string) {
+    await db.insert(adminLogs)
+      .values({
+        adminId,
+        action,
+        targetType,
+        targetId,
+        details,
+      });
+  }
+  
+  async getAdminLogs(limit = 100) {
+    return db.select()
+      .from(adminLogs)
+      .orderBy(desc(adminLogs.timestamp))
+      .limit(limit);
+  }
+  
+  async getSystemStats(): Promise<SystemStats> {
+    // Get total creators
+    const [totalCreatorsResult] = await db.select({ count: count() })
+      .from(creators);
+      
+    const totalCreators = Number(totalCreatorsResult?.count) || 0;
+    
+    // Get total services 
+    const [totalServicesResult] = await db.select({ count: count() })
+      .from(services);
+      
+    const totalServices = Number(totalServicesResult?.count) || 0;
+    
+    // Get new creators today
+    const today = new Date();
+    // This is a placeholder since we don't have a proper timestamp
+    // In a real system, we would query based on the creation timestamp
+    const newCreatorsToday = 0; 
+    
+    // Get active creators (with at least one service)
+    const [activeCreatorsResult] = await db.select({ count: count(services.creatorId, { distinct: true }) })
+      .from(services);
+      
+    const activeCreators = Number(activeCreatorsResult?.count) || 0;
+    
+    // Total views across all services
+    const totalViews = await this.getTotalServiceViews();
+    
+    // Daily views (approximate from analytics, this would be more precise in a real system)
+    const dailyViews = Math.round(totalViews / 30) || 0; // Rough estimate 
+    
+    // Get populated counties distribution
+    const countiesResults = await db.select({
+      county: services.county,
+      count: count(),
+    })
+    .from(services)
+    .groupBy(services.county)
+    .orderBy(desc(sql`count`));
+    
+    const populatedCounties = countiesResults.map(row => ({
+      name: row.county,
+      count: Number(row.count)
+    }));
+    
+    // Get service type distribution
+    const serviceTypesResults = await db.select({
+      type: services.serviceType,
+      count: count(),
+    })
+    .from(services)
+    .groupBy(services.serviceType)
+    .orderBy(desc(sql`count`));
+    
+    const serviceTypeDistribution = serviceTypesResults.map(row => ({
+      type: row.type,
+      count: Number(row.count)
+    }));
+    
+    // Mock creator growth data as we don't have historical data
+    // In a real application, this would come from a proper time series query
+    const creatorGrowthData = [
+      { date: format(subDays(today, 30), 'MM/dd'), count: Math.round(totalCreators * 0.7) },
+      { date: format(subDays(today, 25), 'MM/dd'), count: Math.round(totalCreators * 0.75) },
+      { date: format(subDays(today, 20), 'MM/dd'), count: Math.round(totalCreators * 0.8) },
+      { date: format(subDays(today, 15), 'MM/dd'), count: Math.round(totalCreators * 0.85) },
+      { date: format(subDays(today, 10), 'MM/dd'), count: Math.round(totalCreators * 0.9) },
+      { date: format(subDays(today, 5), 'MM/dd'), count: Math.round(totalCreators * 0.95) },
+      { date: format(today, 'MM/dd'), count: totalCreators }
+    ];
+      
+    return {
+      totalCreators,
+      activeCreators,
+      totalServices,
+      newCreatorsToday,
+      dailyViews,
+      totalViews,
+      populatedCounties,
+      serviceTypeDistribution,
+      creatorGrowthData
+    };
+  }
+  
+  // Helper method to get total views across all services
+  async getTotalServiceViews() {
+    const [result] = await db.select({
+      total: sql<number>`SUM(${services.viewCount})`
+    })
+    .from(services);
+    
+    return Number(result?.total) || 0;
+  }
+  
+  // Get login activity for admin dashboard
+  async getLoginActivity(days = 30) {
+    // In a real system, this would query login events
+    // Since we don't have login tracking yet, we'll return a simple structure
+    const today = new Date();
+    const activityData = [];
+    
+    for (let i = days; i >= 0; i--) {
+      const date = subDays(today, i);
+      activityData.push({
+        date: format(date, 'MM/dd'),
+        logins: Math.floor(Math.random() * 10) + 1, // Random 1-10 for demo
+      });
+    }
+    
+    return activityData;
+  }
+  
+  // Warning system for creators
+  async warnCreator(creatorId: number, message: string, adminId: number) {
+    // In a real system, we'd have a separate warnings table
+    // For now, we'll log it as an admin action
+    await this.logAdminAction(
+      adminId,
+      "warn_creator",
+      "creator",
+      creatorId,
+      message
+    );
+    
+    return true;
+  }
 }
 
 export const storage = new Storage();
