@@ -280,7 +280,7 @@ const Home = () => {
                 </div>
                 <button 
                   className="mt-4 w-full md:w-auto gradient-bg text-white font-medium py-2.5 px-5 rounded-md hover:shadow-md transition-all flex items-center justify-center"
-                  onClick={() => navigate("/?location=Tubmanburg")}
+                  onClick={() => navigate("/search?q=Tubmanburg Bomi")}
                 >
                   <MapPin className="w-4 h-4 mr-2" />
                   Explore All Services in Bomi County
@@ -308,7 +308,10 @@ const Home = () => {
                 <div className="p-4">
                   <p className="text-text-secondary text-sm line-clamp-2 h-10">{location.description}</p>
                   <div className="mt-3 flex justify-between items-center">
-                    <button className="text-sm text-primary font-medium flex items-center hover:underline">
+                    <button 
+                      className="text-sm text-primary font-medium flex items-center hover:underline" 
+                      onClick={() => navigate(`/search?q=${location.name} ${location.county}`)}
+                    >
                       <TrendingUp className="h-4 w-4 mr-1" />
                       Explore services
                     </button>

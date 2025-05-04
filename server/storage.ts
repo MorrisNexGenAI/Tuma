@@ -105,49 +105,122 @@ class Storage {
 
   // Search services
   async searchServices(query: string) {
-    const terms = query.toLowerCase().split(/\s+/);
+    // Common location name mappings for better matching
+    const locationMappings: Record<string, string[]> = {
+      "tubmanburg": ["tubman burg", "tubman-burg", "tubmanberg", "tubman berg", "bomi"],
+      "monrovia": ["monrovia city", "central monrovia", "greater monrovia", "monsterrado", "montserrado"],
+      "bomi": ["bomi county", "tubmanburg", "tubman burg"],
+      "montserrado": ["monsterrado", "monrovia county"],
+      "kakata": ["kakata city", "margibi"],
+      "margibi": ["margibi county", "kakata"],
+      "buchanan": ["buchanan city", "grand bassa", "grandbassa"]
+    };
     
-    // Build the query with SQL directly to avoid type issues
-    const whereConditions = terms.map(term => {
-      const searchPattern = `%${term}%`;
-      return sql`(
-        ${services.serviceType} ILIKE ${searchPattern} OR
-        ${services.community} ILIKE ${searchPattern} OR
-        ${services.city} ILIKE ${searchPattern} OR
-        ${services.county} ILIKE ${searchPattern} OR
-        ${services.name} ILIKE ${searchPattern}
-      )`;
-    });
+    // Service type synonym mappings
+    const serviceTypeMappings: Record<string, string[]> = {
+      "room": ["apartment", "house", "flat", "rent", "bedroom"],
+      "restaurant": ["food", "diner", "eatery", "cafe", "cafeteria"],
+      "barbershop": ["barber", "haircut", "salon for men"],
+      "salon": ["hair salon", "beauty salon", "beauty parlor", "hairdresser"]
+    };
     
-    // Combine all conditions with AND
+    const terms = query.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+    
+    // Enhance search terms with mappings
+    const enhancedTerms = new Set<string>(terms);
+    
+    // Add location mappings
+    for (const term of terms) {
+      // Add mapping terms when we find a match
+      for (const [canonical, variations] of Object.entries(locationMappings)) {
+        if (term === canonical || variations.some(v => term.includes(v))) {
+          enhancedTerms.add(canonical);
+          // Also add the reverse mapping for better recall
+          if (term === canonical) {
+            variations.forEach(v => enhancedTerms.add(v.replace(/\s+/g, "")));
+          }
+        }
+      }
+      
+      // Add service type mappings
+      for (const [canonical, variations] of Object.entries(serviceTypeMappings)) {
+        if (term === canonical || variations.some(v => term.includes(v))) {
+          enhancedTerms.add(canonical);
+        }
+      }
+    }
+    
+    // Convert back to array
+    const searchTerms = Array.from(enhancedTerms);
+    console.log(`Original terms: ${terms.join(', ')}, Enhanced: ${searchTerms.join(', ')}`);
+    
+    // Get all available services
     const whereClause = sql`${services.available} = 1`;
     const results = await db.select().from(services).where(whereClause);
     
-    // Filter results based on search terms
+    // Create fuzzy match function for location names
+    const fuzzyMatch = (serviceValue: string, searchTerm: string): boolean => {
+      if (!serviceValue) return false;
+      
+      const serviceValueLower = serviceValue.toLowerCase();
+      
+      // Direct match
+      if (serviceValueLower.includes(searchTerm)) return true;
+      
+      // Remove spaces for matching variations like "tubmanburg" vs "tubman burg"
+      if (serviceValueLower.replace(/\s+/g, "").includes(searchTerm.replace(/\s+/g, ""))) return true;
+      
+      // Check for partial matches at word boundaries
+      const words = serviceValueLower.split(/\s+/);
+      for (const word of words) {
+        if (word.startsWith(searchTerm) || searchTerm.startsWith(word)) return true;
+      }
+      
+      return false;
+    };
+    
+    // Filter results with fuzzy matching
     const filteredResults = results.filter(service => {
-      return terms.every(term => {
+      // If no search terms, return all services
+      if (searchTerms.length === 0) return true;
+      
+      // Check if ANY search term matches (not requiring ALL terms to match)
+      return searchTerms.some(term => {
         const searchTerm = term.toLowerCase();
         return (
-          service.serviceType.toLowerCase().includes(searchTerm) ||
-          service.community.toLowerCase().includes(searchTerm) ||
-          service.city.toLowerCase().includes(searchTerm) ||
-          service.county.toLowerCase().includes(searchTerm) ||
-          service.name.toLowerCase().includes(searchTerm)
+          fuzzyMatch(service.serviceType, searchTerm) ||
+          fuzzyMatch(service.community, searchTerm) ||
+          fuzzyMatch(service.city, searchTerm) ||
+          fuzzyMatch(service.county, searchTerm) ||
+          fuzzyMatch(service.name, searchTerm) ||
+          (service.description && fuzzyMatch(service.description, searchTerm))
         );
       });
     });
     
-    // Rank results by match quality (community > city > county)
+    // Rank results by match quality
     return filteredResults.sort((a, b) => {
       // Higher score means better match
       const getScore = (service: Service) => {
         let score = 0;
         
-        for (const term of terms) {
-          if (service.community.toLowerCase().includes(term)) score += 3;
-          if (service.city.toLowerCase().includes(term)) score += 2;
-          if (service.county.toLowerCase().includes(term)) score += 1;
-          if (service.serviceType.toLowerCase().includes(term)) score += 4;
+        for (const term of searchTerms) {
+          // Exact matches get higher scores
+          if (service.serviceType.toLowerCase() === term) score += 10;
+          else if (fuzzyMatch(service.serviceType, term)) score += 5;
+          
+          if (service.community.toLowerCase() === term) score += 8;
+          else if (fuzzyMatch(service.community, term)) score += 4;
+          
+          if (service.city.toLowerCase() === term) score += 6;
+          else if (fuzzyMatch(service.city, term)) score += 3;
+          
+          if (service.county.toLowerCase() === term) score += 4;
+          else if (fuzzyMatch(service.county, term)) score += 2;
+          
+          // Name and description matches
+          if (fuzzyMatch(service.name, term)) score += 3;
+          if (service.description && fuzzyMatch(service.description, term)) score += 1;
         }
         
         return score;
@@ -169,13 +242,15 @@ class Storage {
     // Base query
     let query = db.select().from(services);
     
-    // Apply location filters
+    // Apply location filters with ILIKE for case-insensitive matching
     if (county) {
-      query = query.where(eq(services.county, county));
+      const countyPattern = `%${county}%`;
+      query = query.where(sql`${services.county} ILIKE ${countyPattern}`);
     }
     
     if (city) {
-      query = query.where(eq(services.city, city));
+      const cityPattern = `%${city}%`;
+      query = query.where(sql`${services.city} ILIKE ${cityPattern}`);
     }
     
     // Only show available services
@@ -184,7 +259,61 @@ class Storage {
     // Order by newest first
     query = query.orderBy(desc(services.id));
     
-    return query;
+    const results = await query;
+    
+    // Apply additional fuzzy matching if needed for locations with variations in spelling
+    if (county || city) {
+      // Define location mappings for fuzzy matching
+      const locationMappings: Record<string, string[]> = {
+        "tubmanburg": ["tubman burg", "tubman-burg", "tubmanberg", "tubman berg"],
+        "monrovia": ["monrovia city", "central monrovia"],
+        "bomi": ["bomi county", "tubmanburg county"],
+        "montserrado": ["monsterrado", "monrovia county"]
+      };
+      
+      return results.filter(service => {
+        // If no county or city specified, include all services
+        if (!county && !city) return true;
+        
+        // For county matching
+        if (county) {
+          const countyLower = county.toLowerCase();
+          const serviceCouty = service.county.toLowerCase();
+          
+          // Direct match
+          if (serviceCouty.includes(countyLower)) return true;
+          
+          // Check for variations
+          for (const [canonical, variations] of Object.entries(locationMappings)) {
+            if ((canonical === countyLower || variations.some(v => countyLower.includes(v))) && 
+                (serviceCouty.includes(canonical) || variations.some(v => serviceCouty.includes(v)))) {
+              return true;
+            }
+          }
+        }
+        
+        // For city matching
+        if (city) {
+          const cityLower = city.toLowerCase();
+          const serviceCity = service.city.toLowerCase();
+          
+          // Direct match
+          if (serviceCity.includes(cityLower)) return true;
+          
+          // Check for variations
+          for (const [canonical, variations] of Object.entries(locationMappings)) {
+            if ((canonical === cityLower || variations.some(v => cityLower.includes(v))) && 
+                (serviceCity.includes(canonical) || variations.some(v => serviceCity.includes(v)))) {
+              return true;
+            }
+          }
+        }
+        
+        return false;
+      });
+    }
+    
+    return results;
   }
 }
 
