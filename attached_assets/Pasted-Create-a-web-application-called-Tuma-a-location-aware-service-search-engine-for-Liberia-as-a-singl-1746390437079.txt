@@ -1,0 +1,83 @@
+Create a web application called Tuma, a location-aware service search engine for Liberia, as a single-build project with a React + Vite + TypeScript frontend and a Node.js + Express + TypeScript backend, served together. The app helps seekers find local services (e.g., rooms, restaurants, barbershops) without login and allows creators (service providers) to manage listings. Use SQLite for local storage and follow a minimalistic, engaging design with a defined font and color scheme.
+
+### Project Requirements
+1. **Architecture**:
+   - Single build: React frontend built with Vite, output to `dist` folder, served statically by Express backend.
+   - Folder structure:
+     - `client/`: React + Vite + TypeScript (frontend).
+     - `server/`: Node.js + Express + TypeScript (backend).
+     - `dist/`: Built frontend files.
+   - Backend handles API routes and serves `dist` using `express.static`.
+   - Frontend makes API calls to backend (e.g., `/api/services`).
+   - Use SQLite for local database (store creator and service data).
+   - No external services (e.g., Firebase, Supabase).
+
+2. **Features**:
+   - **Seeker Experience** (no login required):
+     - Landing page: Show all available services (name, service type, location, phone, hours). Include a search bar for free-text queries (e.g., “Room in Sinkor”).
+     - Search: Match query against service type (e.g., “Room”) and location (community, city, county). Only show services marked “available”. Display results in a list with click-to-call phone links (`tel:`).
+     - Example services: Rooms, Restaurants, Barbershops, Salons.
+   - **Creator Experience**:
+     - Sign-up: Form for name, phone, service type (dropdown), location (country: Liberia, county, city, community), optional operating hours.
+     - Login: Simple phone + password authentication (minimal security for MVP).
+     - Creator portal: Toggle service availability (On/Off), edit service details, view listing.
+   - **Search Logic**:
+     - Tokenize free-text query (e.g., “Room in Sinkor 24 Street”).
+     - Match against service type and location fields (use SQLite `LIKE` for community, city, county).
+     - Return available services, ranked by location match (community > city > county).
+   - **Database**:
+     - SQLite table `services` with columns: `id`, `name`, `phone`, `serviceType`, `country`, `county`, `city`, `community`, `operatingHours`, `available` (integer: 1 for On, 0 for Off).
+     - Preload 10 sample services (e.g., rooms in Sinkor, restaurants in Paynesville).
+
+3. **Visual Design**:
+   - **Fonts**:
+     - Primary: Inter (Google Fonts, weights: 400, 500, 600, 700).
+     - Fallback: `system-ui, -apple-system, sans-serif`.
+     - Usage: Headings (Bold), body (Regular), buttons (Medium).
+   - **Color Scheme**:
+     - Primary: #10B981 (Emerald Green) for buttons, links.
+     - Secondary: #FBBF24 (Warm Yellow) for banners, badges.
+     - Background: #F9FAFB (Soft White) for cards, modals.
+     - Text Primary: #1F2A44 (Deep Slate) for headings, body.
+     - Text Secondary: #6B7280 (Slate Gray) for subtext.
+     - Error: #F87171 (Coral Red) for alerts.
+     - Border: #E5E7EB (Light Gray) for cards, dividers.
+     - Define as CSS variables (`--primary`, `--secondary`, etc.).
+   - **Design Principles**:
+     - Minimalistic: Clean layout, ample white space.
+     - Engaging: Bold buttons, subtle hover animations.
+     - Advertisement-Like: Service cards styled as mini-ads (clear name, type, phone; prominent “Call Now” button).
+     - Mobile-First: Responsive design (stack cards vertically on small screens).
+     - Accessible: High contrast, minimum 16px body text.
+
+4. **Implementation Details**:
+   - **Frontend**:
+     - Use React hooks for state (no Redux).
+     - Pages: Landing (search + service list), Search Results, Creator Sign-Up, Creator Login, Creator Portal.
+     - Use `axios` or `fetch` for API calls.
+     - Vite config: Output to `../dist`, proxy `/api` to `http://localhost:3000` in dev.
+   - **Backend**:
+     - Express routes:
+       - `GET /api/services`: List available services.
+       - `GET /api/search?query=...`: Search services.
+       - `POST /api/creators`: Sign-up.
+       - `POST /api/login`: Login.
+       - `PUT /api/services/:id`: Update service (availability, details).
+     - SQLite setup: Create `services` table, insert 10 sample services.
+     - Serve frontend: `express.static('dist')`, fallback to `index.html` for non-API routes.
+   - **Dependencies**:
+     - Frontend: `react`, `react-dom`, `axios`.
+     - Backend: `express`, `sqlite3`, `@types/express`, `@types/node`.
+     - Dev: `typescript`, `vite`, `@vitejs/plugin-react`, `ts-node`.
+
+5. **Deliverables**:
+   - Complete project in Replit with `client` and `server` folders.
+   - Working MVP with:
+     - Landing page with search and service list.
+     - Search functionality (e.g., “Room in Sinkor” returns matching services).
+     - Creator sign-up, login, and portal.
+     - Responsive design with defined fonts and colors.
+   - Instructions to run: `npm run build` in `client`, `npm start` in `server`.
+   - Sample data in SQLite (10 services).
+
+Please set up the project, implement the features, and apply the visual design as specified. Ensure the app is mobile-first, minimalistic, and engaging, with service cards displayed like advertisements. Provide a brief README with setup and run instructions.
