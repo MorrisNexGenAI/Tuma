@@ -63,6 +63,7 @@ const CreatorPortal = () => {
       community: "",
       operatingHours: "",
       description: "",
+      pricing: "",
       available: true,
     },
   });
@@ -398,22 +399,13 @@ const CreatorPortal = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-text-secondary">County</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="p-3 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                            <SelectValue placeholder="Select county" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Montserrado">Montserrado</SelectItem>
-                          <SelectItem value="Margibi">Margibi</SelectItem>
-                          <SelectItem value="Bong">Bong</SelectItem>
-                          <SelectItem value="Nimba">Nimba</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Input
+                          className="p-3 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                          placeholder="Enter county (e.g. Montserrado)"
+                          {...field}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -425,21 +417,13 @@ const CreatorPortal = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-text-secondary">City</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="p-3 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                            <SelectValue placeholder="Select city" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Monrovia">Monrovia</SelectItem>
-                          <SelectItem value="Paynesville">Paynesville</SelectItem>
-                          <SelectItem value="Gbarnga">Gbarnga</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Input
+                          className="p-3 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                          placeholder="Enter city (e.g. Monrovia)"
+                          {...field}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -464,22 +448,46 @@ const CreatorPortal = () => {
               />
             </div>
             
-            <FormField
-              control={form.control}
-              name="operatingHours"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-text-secondary">Operating Hours</FormLabel>
-                  <FormControl>
-                    <Input
-                      className="p-3 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="operatingHours"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-text-secondary">Operating Hours</FormLabel>
+                    <FormControl>
+                      <Input
+                        className="p-3 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                        placeholder="e.g. 8am-6pm"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="pricing"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-text-secondary">Price (Optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        className="p-3 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                        placeholder="e.g. $20 USD or 500 LD"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription className="text-xs">
+                      Enter your pricing information, e.g. "$500 USD" or "200-300 LD"
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+            </div>
             
             {/* Tabs for Media and Description */}
             <Tabs defaultValue="photos" className="w-full mt-6">
