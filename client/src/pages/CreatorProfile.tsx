@@ -16,7 +16,20 @@ const CreatorProfile = () => {
   const { toast } = useToast();
   
   // Fetch creator profile 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<{ 
+    creator?: {
+      id: number;
+      phone: string; 
+      profileImage?: string;
+      fullName?: string;
+      bio?: string;
+      followers?: number;
+      joinedDate?: string;
+      socialLinks?: string;
+      rating?: string;
+    };
+    service?: any;
+  }>({
     queryKey: ['/api/creators', creatorId],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !isNaN(creatorId)

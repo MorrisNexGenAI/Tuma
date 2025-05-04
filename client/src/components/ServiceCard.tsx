@@ -27,7 +27,7 @@ const ServiceCard = ({ service, showDetailed = false }: ServiceCardProps) => {
     images,
     operatingHours, 
     available,
-    viewCount,
+    viewCount = null,
     tags,
     lastUpdated
   } = service;
