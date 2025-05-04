@@ -109,7 +109,16 @@ const Home = () => {
   // Handle category selection
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
-    navigate(`/?category=${category}`);
+    // Navigate to search page with category as query
+    navigate(`/search?q=${category}`);
+    
+    // Scroll to results section
+    setTimeout(() => {
+      const resultsSection = document.getElementById('search-results');
+      if (resultsSection) {
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 300);
   };
 
   return (

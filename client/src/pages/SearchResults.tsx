@@ -61,6 +61,19 @@ const SearchResults = () => {
     );
   };
 
+  // Group services by type for better categorization
+  const servicesByType = searchResults.reduce((acc, service) => {
+    const type = service.serviceType || "Other";
+    if (!acc[type]) {
+      acc[type] = [];
+    }
+    acc[type].push(service);
+    return acc;
+  }, {} as Record<string, Service[]>);
+
+  // Get all unique service types from results
+  const serviceTypes = Object.keys(servicesByType);
+  
   return (
     <div className="container mx-auto px-4 py-6 fade-in">
       <div className="mb-6">
@@ -107,6 +120,21 @@ const SearchResults = () => {
             </div>
           </div>
           
+          {/* Service type quick filters */}
+          {serviceTypes.length > 1 && (
+            <div className="flex flex-wrap gap-2">
+              {serviceTypes.map(type => (
+                <a 
+                  key={type} 
+                  href={`#${type.toLowerCase()}-section`}
+                  className="inline-flex items-center bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20"
+                >
+                  <span className="text-sm font-medium text-primary">{type}s</span>
+                </a>
+              ))}
+            </div>
+          )}
+          
           {filters.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {filters.map(filter => (
@@ -129,54 +157,76 @@ const SearchResults = () => {
       </div>
       
       {/* Search Results List */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="service-card">
-              <div className="p-4 animate-pulse">
-                <div className="h-6 bg-gray-200 rounded mb-2 w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded mb-4 w-1/2"></div>
-                <div className="h-4 bg-gray-200 rounded mb-2 w-full"></div>
-                <div className="h-4 bg-gray-200 rounded mb-4 w-2/3"></div>
-                <div className="h-10 bg-gray-200 rounded w-full"></div>
+      <div id="search-results">
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="service-card">
+                <div className="p-4 animate-pulse">
+                  <div className="h-6 bg-gray-200 rounded mb-2 w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-4 w-1/2"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2 w-full"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-4 w-2/3"></div>
+                  <div className="h-10 bg-gray-200 rounded w-full"></div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : searchResults.length === 0 ? (
-        <div className="bg-white rounded-lg p-8 text-center shadow-md">
-          <svg 
-            className="w-12 h-12 text-text-secondary mx-auto mb-4" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24" 
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth="2" 
-              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
-          </svg>
-          <h3 className="text-lg font-medium mb-2">No results found</h3>
-          <p className="text-text-secondary mb-4">
-            We couldn't find any services matching your search. Try different keywords or browse categories.
-          </p>
-          <Link 
-            href="/" 
-            className="btn-primary inline-block py-2 px-4 rounded-md"
-          >
-            Browse All Services
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {searchResults.map((service) => (
-            <ServiceCard key={service.id} service={service} />
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        ) : searchResults.length === 0 ? (
+          <div className="bg-white rounded-lg p-8 text-center shadow-md">
+            <svg 
+              className="w-12 h-12 text-text-secondary mx-auto mb-4" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth="2" 
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            <h3 className="text-lg font-medium mb-2">No results found</h3>
+            <p className="text-text-secondary mb-4">
+              We couldn't find any services matching your search. Try different keywords or browse categories.
+            </p>
+            <Link 
+              href="/" 
+              className="btn-primary inline-block py-2 px-4 rounded-md"
+            >
+              Browse All Services
+            </Link>
+          </div>
+        ) : serviceTypes.length > 1 ? (
+          // Display grouped by service type when we have multiple types
+          <div className="space-y-8">
+            {serviceTypes.map(type => (
+              <div key={type} id={`${type.toLowerCase()}-section`} className="bg-white rounded-lg p-4 shadow-sm">
+                <h2 className="text-xl font-bold mb-4 px-2 py-1 border-l-4 border-primary">
+                  {type}s
+                  <span className="text-sm font-normal text-text-secondary ml-2">
+                    ({servicesByType[type].length})
+                  </span>
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {servicesByType[type].map(service => (
+                    <ServiceCard key={service.id} service={service} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Simple display for single type results
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {searchResults.map((service) => (
+              <ServiceCard key={service.id} service={service} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
