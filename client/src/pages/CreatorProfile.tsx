@@ -38,6 +38,7 @@ const CreatorProfile = () => {
   // Show error toast if fetch fails
   useEffect(() => {
     if (error) {
+      console.error("Creator profile error:", error);
       toast({
         title: "Error",
         description: "Failed to load creator profile",
@@ -46,8 +47,15 @@ const CreatorProfile = () => {
     }
   }, [error, toast]);
   
+  // Log data for debugging
+  useEffect(() => {
+    if (data) {
+      console.log("Creator profile data:", data);
+    }
+  }, [data]);
+  
   // Handle creator not found
-  if (!isLoading && !data) {
+  if (!isLoading && (!data || !data.creator)) {
     return (
       <div className="container max-w-6xl mx-auto px-4 py-8">
         <div className="bg-white rounded-xl shadow-md p-8 text-center">
