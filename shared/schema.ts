@@ -8,7 +8,13 @@ export const creators = pgTable("creators", {
   id: serial("id").primaryKey(),
   phone: text("phone").notNull().unique(),
   password: text("password").notNull(),
+  fullName: text("full_name"),
   profileImage: text("profile_image"),
+  bio: text("bio"),
+  joinedDate: text("joined_date"),
+  followers: integer("followers").default(0),
+  rating: text("rating"), // Stored as JSON with average and count
+  socialLinks: text("social_links"), // Stored as JSON
 });
 
 // Services table
@@ -23,9 +29,15 @@ export const services = pgTable("services", {
   city: text("city").notNull(),
   community: text("community").notNull(),
   description: text("description"),
+  detailedDescription: text("detailed_description"), // More detailed information
+  features: text("features"), // JSON array of features
+  pricing: text("pricing"), // Pricing information
   images: text("images"), // Stored as JSON array of image URLs
   operatingHours: text("operating_hours"),
   available: integer("available").notNull().default(1), // 1 for On, 0 for Off
+  viewCount: integer("view_count").default(0),
+  tags: text("tags"), // For enhanced searching
+  lastUpdated: text("last_updated"),
 });
 
 // Define relationships
@@ -96,10 +108,33 @@ export const serviceUpdateSchema = z.object({
   available: z.boolean().default(true),
 });
 
+// Extended service update schema (including detailed descriptions)
+export const extendedServiceUpdateSchema = z.object({
+  name: z.string().min(3, "Service name must be at least 3 characters"),
+  serviceType: z.string().min(1, "Please select a service type"),
+  phone: z.string().min(8, "Phone number must be at least 8 digits"),
+  country: z.string().default("Liberia"),
+  county: z.string().min(1, "County is required"),
+  city: z.string().min(1, "City is required"),
+  community: z.string().min(1, "Community/area is required"),
+  description: z.string().optional(),
+  detailedDescription: z.string().optional(),
+  features: z.string().optional(), // JSON string of features
+  pricing: z.string().optional(),
+  images: z.string().optional(), // JSON string of image URLs
+  operatingHours: z.string().optional(),
+  available: z.boolean().default(true),
+  tags: z.string().optional(),
+});
+
 // Profile update schema for creator
 export const profileUpdateSchema = z.object({
+  fullName: z.string().optional(),
   profileImage: z.string().optional(),
+  bio: z.string().optional(),
+  socialLinks: z.string().optional(),
 });
 
 export type ServiceUpdate = z.infer<typeof serviceUpdateSchema>;
+export type ExtendedServiceUpdate = z.infer<typeof extendedServiceUpdateSchema>;
 export type ProfileUpdate = z.infer<typeof profileUpdateSchema>;
