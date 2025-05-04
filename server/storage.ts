@@ -1,6 +1,6 @@
 import { db } from "@db";
 import { creators, services, Service, ProfileUpdate } from "@shared/schema";
-import { eq, and, like, or, desc, asc } from "drizzle-orm";
+import { eq, and, like, or, desc, asc, sql } from "drizzle-orm";
 
 interface GetServicesOptions {
   category?: string;
@@ -107,27 +107,38 @@ class Storage {
   async searchServices(query: string) {
     const terms = query.toLowerCase().split(/\s+/);
     
-    // Build search conditions
-    const searchConditions = terms.map(term => {
-      return or(
-        like(services.serviceType.toLowerCase(), `%${term}%`),
-        like(services.community.toLowerCase(), `%${term}%`),
-        like(services.city.toLowerCase(), `%${term}%`),
-        like(services.county.toLowerCase(), `%${term}%`),
-        like(services.name.toLowerCase(), `%${term}%`)
-      );
+    // Build the query with SQL directly to avoid type issues
+    const whereConditions = terms.map(term => {
+      const searchPattern = `%${term}%`;
+      return sql`(
+        ${services.serviceType} ILIKE ${searchPattern} OR
+        ${services.community} ILIKE ${searchPattern} OR
+        ${services.city} ILIKE ${searchPattern} OR
+        ${services.county} ILIKE ${searchPattern} OR
+        ${services.name} ILIKE ${searchPattern}
+      )`;
     });
     
     // Combine all conditions with AND
-    const combinedCondition = and(
-      ...searchConditions,
-      eq(services.available, 1) // Only show available services
-    );
+    const whereClause = sql`${services.available} = 1`;
+    const results = await db.select().from(services).where(whereClause);
     
-    const results = await db.select().from(services).where(combinedCondition);
+    // Filter results based on search terms
+    const filteredResults = results.filter(service => {
+      return terms.every(term => {
+        const searchTerm = term.toLowerCase();
+        return (
+          service.serviceType.toLowerCase().includes(searchTerm) ||
+          service.community.toLowerCase().includes(searchTerm) ||
+          service.city.toLowerCase().includes(searchTerm) ||
+          service.county.toLowerCase().includes(searchTerm) ||
+          service.name.toLowerCase().includes(searchTerm)
+        );
+      });
+    });
     
     // Rank results by match quality (community > city > county)
-    return results.sort((a, b) => {
+    return filteredResults.sort((a, b) => {
       // Higher score means better match
       const getScore = (service: Service) => {
         let score = 0;

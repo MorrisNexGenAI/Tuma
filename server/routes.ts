@@ -147,6 +147,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         city: data.city,
         community: data.community,
         operatingHours: data.operatingHours,
+        description: data.description,
+        images: data.images,
         available: data.available ? 1 : 0,
       });
       
@@ -310,6 +312,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Update description error:", error);
       res.status(500).json({ message: "Failed to update service description" });
+    }
+  });
+  
+  // Get creator profile
+  app.get("/api/creator/profile", requireAuth, async (req, res) => {
+    try {
+      const creatorId = req.session.creatorId as number;
+      const creator = await storage.getCreatorById(creatorId);
+      
+      if (!creator) {
+        return res.status(404).json({ message: "Creator not found" });
+      }
+      
+      res.status(200).json(creator);
+    } catch (error) {
+      console.error("Get creator profile error:", error);
+      res.status(500).json({ message: "Failed to get creator profile" });
+    }
+  });
+  
+  // Update creator profile
+  app.put("/api/creator/profile", requireAuth, async (req, res) => {
+    try {
+      const creatorId = req.session.creatorId as number;
+      const data = schema.profileUpdateSchema.parse(req.body);
+      
+      // Update creator profile
+      await storage.updateCreatorProfile(creatorId, data);
+      
+      res.status(200).json({ message: "Profile updated successfully" });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      }
+      console.error("Update creator profile error:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+  
+  // Generic file upload endpoint
+  app.post("/api/upload", requireAuth, ensureUploadsDir, async (req, res) => {
+    try {
+      if (!req.files || Object.keys(req.files).length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+      
+      // Handle multiple files
+      const uploadedFiles = req.files.files;
+      const paths = await handleMultipleFileUploads(uploadedFiles);
+      
+      res.status(200).json({ message: "Files uploaded successfully", files: paths });
+    } catch (error) {
+      console.error("File upload error:", error);
+      res.status(500).json({ message: "Failed to upload files" });
+    }
+  });
+  
+  // Profile image upload endpoint
+  app.post("/api/upload/profile", requireAuth, ensureUploadsDir, async (req, res) => {
+    try {
+      if (!req.files || Object.keys(req.files).length === 0) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      // Handle single file
+      const file = req.files.file as UploadedFile;
+      const path = await handleFileUpload(file);
+      
+      res.status(200).json({ message: "File uploaded successfully", file: path });
+    } catch (error) {
+      console.error("Profile image upload error:", error);
+      res.status(500).json({ message: "Failed to upload profile image" });
     }
   });
   

@@ -67,6 +67,12 @@ const CreatorPortal = () => {
     },
   });
 
+  // Get creator profile
+  const { data: creator } = useQuery({
+    queryKey: ["/api/creator/profile"],
+    enabled: !!service,
+  });
+
   // Update form values when service data is loaded
   useEffect(() => {
     if (service) {
@@ -93,13 +99,15 @@ const CreatorPortal = () => {
           console.error("Error parsing service images:", e);
         }
       }
-      
-      // Set profile image if available
-      if (service.profileImage) {
-        setProfileImageUrl(service.profileImage);
-      }
     }
   }, [service, form]);
+  
+  // Set profile image when creator data is loaded
+  useEffect(() => {
+    if (creator && creator.profileImage) {
+      setProfileImageUrl(creator.profileImage);
+    }
+  }, [creator]);
 
   // Update service mutation
   const updateServiceMutation = useMutation({
