@@ -1,6 +1,7 @@
 import { db } from "@db";
-import { creators, services, Service, ProfileUpdate, ExtendedServiceUpdate } from "@shared/schema";
-import { eq, and, like, or, desc, asc, sql, ilike } from "drizzle-orm";
+import { creators, services, Service, ProfileUpdate, ExtendedServiceUpdate, analyticsEvents, serviceStats } from "@shared/schema";
+import { eq, and, like, or, desc, asc, sql, ilike, gte, lte } from "drizzle-orm";
+import { format, subDays, subMonths } from "date-fns";
 
 interface GetServicesOptions {
   category?: string;

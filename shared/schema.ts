@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -40,15 +40,55 @@ export const services = pgTable("services", {
   lastUpdated: text("last_updated"),
 });
 
+// Analytics events table
+export const analyticsEvents = pgTable("analytics_events", {
+  id: serial("id").primaryKey(),
+  serviceId: integer("service_id").references(() => services.id),
+  eventType: text("event_type").notNull(), // view, contact_click, etc.
+  eventData: text("event_data"), // Additional JSON data
+  userLocation: text("user_location"), // County/city info
+  userAgent: text("user_agent"), // Browser info
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  sessionId: text("session_id"), // To track unique visits
+});
+
+// Service stats table for aggregated metrics
+export const serviceStats = pgTable("service_stats", {
+  id: serial("id").primaryKey(),
+  serviceId: integer("service_id").references(() => services.id).notNull(),
+  totalViews: integer("total_views").default(0),
+  contactClicks: integer("contact_clicks").default(0),
+  viewsByDay: text("views_by_day"), // JSON with day breakdown
+  viewsByHour: text("views_by_hour"), // JSON with hour breakdown
+  locationBreakdown: text("location_breakdown"), // JSON with location stats
+  lastUpdated: timestamp("last_updated").defaultNow().notNull(),
+});
+
 // Define relationships
 export const creatorsRelations = relations(creators, ({ many }) => ({
   services: many(services),
 }));
 
-export const servicesRelations = relations(services, ({ one }) => ({
+export const servicesRelations = relations(services, ({ one, many }) => ({
   creator: one(creators, {
     fields: [services.creatorId],
     references: [creators.id],
+  }),
+  analyticsEvents: many(analyticsEvents),
+  stats: many(serviceStats),
+}));
+
+export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => ({
+  service: one(services, {
+    fields: [analyticsEvents.serviceId],
+    references: [services.id],
+  }),
+}));
+
+export const serviceStatsRelations = relations(serviceStats, ({ one }) => ({
+  service: one(services, {
+    fields: [serviceStats.serviceId],
+    references: [services.id],
   }),
 }));
 
