@@ -64,6 +64,44 @@ export const serviceStats = pgTable("service_stats", {
   lastUpdated: timestamp("last_updated").defaultNow().notNull(),
 });
 
+// Admin table for platform administration
+export const admins = pgTable("admins", {
+  id: serial("id").primaryKey(),
+  fullName: text("full_name").notNull(),
+  phone: text("phone").notNull().unique(),
+  pin: text("pin").notNull(), // Encrypted PIN for authentication
+  role: text("role").default("admin"),
+  lastLogin: timestamp("last_login"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// System announcements table for admin broadcasts
+export const announcements = pgTable("announcements", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id").references(() => admins.id),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  priority: text("priority").default("normal"), // normal, important, critical
+  targetAudience: text("target_audience").default("all"), // all, creators, specific regions
+  startDate: timestamp("start_date").defaultNow(),
+  endDate: timestamp("end_date"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Admin activity logs for auditing
+export const adminLogs = pgTable("admin_logs", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id").references(() => admins.id),
+  action: text("action").notNull(), // create, update, delete, warn, etc.
+  targetType: text("target_type").notNull(), // creator, service, announcement, etc.
+  targetId: integer("target_id"), // ID of the affected item
+  details: text("details"), // JSON details of the action
+  ipAddress: text("ip_address"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
 // Define relationships
 export const creatorsRelations = relations(creators, ({ many }) => ({
   services: many(services),
@@ -89,6 +127,26 @@ export const serviceStatsRelations = relations(serviceStats, ({ one }) => ({
   service: one(services, {
     fields: [serviceStats.serviceId],
     references: [services.id],
+  }),
+}));
+
+// Admin relations
+export const adminsRelations = relations(admins, ({ many }) => ({
+  announcements: many(announcements),
+  logs: many(adminLogs),
+}));
+
+export const announcementsRelations = relations(announcements, ({ one }) => ({
+  admin: one(admins, {
+    fields: [announcements.adminId],
+    references: [admins.id],
+  }),
+}));
+
+export const adminLogsRelations = relations(adminLogs, ({ one }) => ({
+  admin: one(admins, {
+    fields: [adminLogs.adminId],
+    references: [admins.id],
   }),
 }));
 
@@ -179,3 +237,38 @@ export const profileUpdateSchema = z.object({
 export type ServiceUpdate = z.infer<typeof serviceUpdateSchema>;
 export type ExtendedServiceUpdate = z.infer<typeof extendedServiceUpdateSchema>;
 export type ProfileUpdate = z.infer<typeof profileUpdateSchema>;
+
+// Admin schemas
+export const adminInsertSchema = createInsertSchema(admins);
+export type AdminInsert = z.infer<typeof adminInsertSchema>;
+export type Admin = typeof admins.$inferSelect;
+
+// Admin login schema
+export const adminLoginSchema = z.object({
+  phone: z.string().min(1, "Phone number is required"),
+  pin: z.string().min(4, "PIN is required").max(6, "PIN cannot exceed 6 digits"),
+});
+
+export type AdminLogin = z.infer<typeof adminLoginSchema>;
+
+// Announcement schema
+export const announcementSchema = createInsertSchema(announcements, {
+  title: (schema) => schema.min(3, "Title must be at least 3 characters"),
+  message: (schema) => schema.min(10, "Message must be at least 10 characters"),
+});
+
+export type AnnouncementInsert = z.infer<typeof announcementSchema>;
+export type Announcement = typeof announcements.$inferSelect;
+
+// System statistics type for admin dashboard
+export type SystemStats = {
+  totalCreators: number;
+  activeCreators: number;
+  totalServices: number;
+  newCreatorsToday: number;
+  dailyViews: number;
+  totalViews: number;
+  populatedCounties: { name: string; count: number }[];
+  serviceTypeDistribution: { type: string; count: number }[];
+  creatorGrowthData: { date: string; count: number }[];
+};

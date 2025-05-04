@@ -1,7 +1,21 @@
 import { db } from "@db";
-import { creators, services, Service, ProfileUpdate, ExtendedServiceUpdate, analyticsEvents, serviceStats } from "@shared/schema";
-import { eq, and, like, or, desc, asc, sql, ilike, gte, lte } from "drizzle-orm";
-import { format, subDays, subMonths } from "date-fns";
+import { 
+  creators, 
+  services, 
+  Service, 
+  ProfileUpdate, 
+  ExtendedServiceUpdate, 
+  analyticsEvents, 
+  serviceStats,
+  admins,
+  announcements,
+  adminLogs,
+  SystemStats,
+  Admin,
+  Announcement
+} from "@shared/schema";
+import { eq, and, like, or, desc, asc, sql, ilike, gte, lte, count } from "drizzle-orm";
+import { format, subDays, subMonths, startOfDay, endOfDay } from "date-fns";
 
 interface GetServicesOptions {
   category?: string;
