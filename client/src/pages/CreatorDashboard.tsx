@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -13,12 +13,10 @@ import {
 } from "@/components/ui/card";
 import { 
   Eye, 
-  Users, 
   Clock, 
   Calendar, 
   TrendingUp, 
   TrendingDown,
-  BarChart2,
   ArrowUpRight,
   Phone,
   MapPin,
@@ -26,10 +24,11 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Service } from "@shared/schema";
+import { format, subDays } from "date-fns";
 
-// Sample data structure for insights
+// Analytics data structure
 interface AnalyticsData {
   viewsHistory: { date: string; views: number }[];
   totalViews: number;
@@ -47,12 +46,37 @@ const CreatorDashboard = () => {
   // Get creator service info
   const { data: service, isLoading: serviceLoading } = useQuery<Service>({
     queryKey: ["/api/services/me"],
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
   
   // Fetch analytics data
   const { data: analyticsData, isLoading: analyticsLoading } = useQuery<AnalyticsData>({
     queryKey: ["/api/analytics", timeframe],
-    queryFn: async () => apiRequest("GET", `/api/analytics?timeframe=${timeframe}`),
+    queryFn: async () => {
+      try {
+        const responseData = await apiRequest("GET", `/api/analytics?timeframe=${timeframe}`);
+        if (!responseData) {
+          console.warn("No analytics data received");
+          return null as unknown as AnalyticsData;
+        }
+        
+        // Force the response type to match our expected structure
+        const data = responseData as any;
+        
+        return {
+          viewsHistory: Array.isArray(data.viewsHistory) ? data.viewsHistory : [],
+          totalViews: typeof data.totalViews === 'number' ? data.totalViews : 0,
+          contactClicks: typeof data.contactClicks === 'number' ? data.contactClicks : 0,
+          viewsGrowth: typeof data.viewsGrowth === 'number' ? data.viewsGrowth : 0,
+          peakHours: Array.isArray(data.peakHours) ? data.peakHours : [],
+          popularDays: Array.isArray(data.popularDays) ? data.popularDays : [],
+          locationBreakdown: Array.isArray(data.locationBreakdown) ? data.locationBreakdown : []
+        } as AnalyticsData;
+      } catch (error) {
+        console.error("Error fetching analytics data:", error);
+        return null as unknown as AnalyticsData;
+      }
+    },
   });
   
   // Handle data loading state
@@ -85,48 +109,33 @@ const CreatorDashboard = () => {
     );
   }
   
-  // Sample data for development - will be replaced with real API data
-  const sampleAnalyticsData: AnalyticsData = {
+  // Generate empty analytics data for cases when no data is available yet
+  const emptyAnalyticsData: AnalyticsData = {
     viewsHistory: [
-      { date: "Mon", views: 12 },
-      { date: "Tue", views: 19 },
-      { date: "Wed", views: 14 },
-      { date: "Thu", views: 21 },
-      { date: "Fri", views: 25 },
-      { date: "Sat", views: 30 },
-      { date: "Sun", views: 18 },
+      { date: format(new Date(), 'EEE'), views: 0 },
     ],
-    totalViews: 139,
-    contactClicks: 23,
-    viewsGrowth: 12.5,
+    totalViews: 0,
+    contactClicks: 0, 
+    viewsGrowth: 0,
     peakHours: [
-      { hour: "8-10 AM", views: 15 },
-      { hour: "10-12 PM", views: 28 },
-      { hour: "12-2 PM", views: 32 },
-      { hour: "2-4 PM", views: 24 },
-      { hour: "4-6 PM", views: 42 },
-      { hour: "6-8 PM", views: 35 },
-      { hour: "8-10 PM", views: 18 },
+      { hour: "8-10 AM", views: 0 },
     ],
     popularDays: [
-      { day: "Monday", views: 42 },
-      { day: "Tuesday", views: 38 },
-      { day: "Wednesday", views: 31 },
-      { day: "Thursday", views: 45 },
-      { day: "Friday", views: 53 },
-      { day: "Saturday", views: 62 },
-      { day: "Sunday", views: 44 },
+      { day: "Monday", views: 0 },
+      { day: "Tuesday", views: 0 },
+      { day: "Wednesday", views: 0 },
+      { day: "Thursday", views: 0 },
+      { day: "Friday", views: 0 },
+      { day: "Saturday", views: 0 },
+      { day: "Sunday", views: 0 },
     ],
     locationBreakdown: [
-      { location: "Montserrado", percentage: 65 },
-      { location: "Bomi", percentage: 15 },
-      { location: "Margibi", percentage: 10 },
-      { location: "Other", percentage: 10 },
+      { location: "Montserrado", percentage: 0 },
     ],
   };
   
-  // Until API is fully implemented, use sample data
-  const data = analyticsData || sampleAnalyticsData;
+  // Use real data with fallback to empty analytics data if not yet available
+  const data = analyticsData || emptyAnalyticsData;
   
   return (
     <div className="container mx-auto px-4 py-8">
@@ -325,7 +334,7 @@ const CreatorDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {data.locationBreakdown.map((location, index) => (
+              {data.locationBreakdown.map((location: { location: string; percentage: number }, index: number) => (
                 <div key={index}>
                   <div className="flex justify-between mb-1">
                     <span className="text-sm font-medium">{location.location}</span>

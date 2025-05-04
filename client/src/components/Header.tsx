@@ -48,6 +48,9 @@ const Header = () => {
               <Link href="/creator/portal" className="btn-outline">
                 My Service
               </Link>
+              <Link href="/creator/dashboard" className="btn-outline">
+                Dashboard
+              </Link>
               <button
                 onClick={handleLogout}
                 className="btn-secondary"
