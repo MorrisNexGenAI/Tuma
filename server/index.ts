@@ -4,10 +4,18 @@ import pgSession from "connect-pg-simple";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { pool } from "../db";
+import { setupFileUpload } from "./uploads";
+import path from "path";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Setup file upload middleware
+setupFileUpload(app);
+
+// Serve static files from public directory
+app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
 
 // Configure session
 const PostgresStore = pgSession(session);

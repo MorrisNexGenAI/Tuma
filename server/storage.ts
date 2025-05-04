@@ -1,5 +1,5 @@
 import { db } from "@db";
-import { creators, services, Service } from "@shared/schema";
+import { creators, services, Service, ProfileUpdate } from "@shared/schema";
 import { eq, and, like, or, desc, asc } from "drizzle-orm";
 
 interface GetServicesOptions {
@@ -144,6 +144,36 @@ class Storage {
       
       return getScore(b) - getScore(a);
     });
+  }
+  
+  // Update creator profile
+  async updateCreatorProfile(id: number, data: ProfileUpdate) {
+    await db.update(creators)
+      .set(data)
+      .where(eq(creators.id, id));
+  }
+  
+  // Get services by location
+  async getServicesByLocation(county?: string, city?: string) {
+    // Base query
+    let query = db.select().from(services);
+    
+    // Apply location filters
+    if (county) {
+      query = query.where(eq(services.county, county));
+    }
+    
+    if (city) {
+      query = query.where(eq(services.city, city));
+    }
+    
+    // Only show available services
+    query = query.where(eq(services.available, 1));
+    
+    // Order by newest first
+    query = query.orderBy(desc(services.id));
+    
+    return query;
   }
 }
 

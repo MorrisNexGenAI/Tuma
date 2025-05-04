@@ -5,6 +5,8 @@ import { auth } from "./auth";
 import * as schema from "@shared/schema";
 import { ZodError } from "zod";
 import "express-session";
+import { UploadedFile } from "express-fileupload";
+import { handleFileUpload, handleMultipleFileUploads, ensureUploadsDir } from "./uploads";
 
 // Extend Express Request type to include session
 declare module "express-session" {
@@ -203,6 +205,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Search error:", error);
       res.status(500).json({ message: "Search failed" });
+    }
+  });
+
+  // Upload profile image
+  app.post("/api/creators/profile-image", requireAuth, ensureUploadsDir, async (req, res) => {
+    try {
+      const creatorId = req.session.creatorId as number;
+      
+      if (!req.files || !req.files.profileImage) {
+        return res.status(400).json({ message: "No profile image uploaded" });
+      }
+      
+      const profileImage = req.files.profileImage as UploadedFile;
+      
+      // Check if it's an image
+      if (!profileImage.mimetype.startsWith('image/')) {
+        return res.status(400).json({ message: "Uploaded file is not an image" });
+      }
+      
+      // Upload the image
+      const imagePath = await handleFileUpload(profileImage);
+      
+      // Update creator profile with image path
+      await storage.updateCreatorProfile(creatorId, { profileImage: imagePath });
+      
+      res.status(200).json({ message: "Profile image uploaded successfully", profileImage: imagePath });
+    } catch (error) {
+      console.error("Profile image upload error:", error);
+      res.status(500).json({ message: "Failed to upload profile image" });
+    }
+  });
+  
+  // Upload service images
+  app.post("/api/services/:id/images", requireAuth, ensureUploadsDir, async (req, res) => {
+    try {
+      const serviceId = parseInt(req.params.id);
+      const creatorId = req.session.creatorId as number;
+      
+      // Verify service belongs to creator
+      const service = await storage.getServiceById(serviceId);
+      if (!service || service.creatorId !== creatorId) {
+        return res.status(403).json({ message: "You don't have permission to update this service" });
+      }
+      
+      if (!req.files || !req.files.images) {
+        return res.status(400).json({ message: "No images uploaded" });
+      }
+      
+      // Handle multiple image uploads (max 3)
+      const uploadedImages = await handleMultipleFileUploads(req.files.images);
+      
+      // Get existing images if any
+      const existingImagesStr = service.images || '[]';
+      let existingImages: string[] = [];
+      
+      try {
+        existingImages = JSON.parse(existingImagesStr);
+      } catch (e) {
+        existingImages = [];
+      }
+      
+      // Combine existing and new images, limit to 3
+      const allImages = [...existingImages, ...uploadedImages].slice(0, 3);
+      
+      // Update service with new images
+      await storage.updateService(serviceId, {
+        images: JSON.stringify(allImages)
+      });
+      
+      res.status(200).json({ 
+        message: "Service images uploaded successfully", 
+        images: allImages,
+        totalCount: allImages.length
+      });
+    } catch (error) {
+      console.error("Service images upload error:", error);
+      res.status(500).json({ message: "Failed to upload service images" });
+    }
+  });
+  
+  // Update service description
+  app.put("/api/services/:id/description", requireAuth, async (req, res) => {
+    try {
+      const serviceId = parseInt(req.params.id);
+      const creatorId = req.session.creatorId as number;
+      
+      // Verify service belongs to creator
+      const service = await storage.getServiceById(serviceId);
+      if (!service || service.creatorId !== creatorId) {
+        return res.status(403).json({ message: "You don't have permission to update this service" });
+      }
+      
+      const { description } = req.body;
+      
+      if (typeof description !== 'string') {
+        return res.status(400).json({ message: "Description must be a string" });
+      }
+      
+      // Update service description
+      await storage.updateService(serviceId, { description });
+      
+      res.status(200).json({ message: "Service description updated successfully" });
+    } catch (error) {
+      console.error("Update description error:", error);
+      res.status(500).json({ message: "Failed to update service description" });
+    }
+  });
+  
+  // Route to get services by location
+  app.get("/api/services/location", async (req, res) => {
+    try {
+      const { county, city } = req.query;
+      
+      if (!county && !city) {
+        return res.status(400).json({ message: "County or city parameter is required" });
+      }
+      
+      const services = await storage.getServicesByLocation(county as string, city as string);
+      res.status(200).json(services);
+    } catch (error) {
+      console.error("Get services by location error:", error);
+      res.status(500).json({ message: "Failed to get services by location" });
     }
   });
 
