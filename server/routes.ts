@@ -4,6 +4,14 @@ import { storage } from "./storage";
 import { auth } from "./auth";
 import * as schema from "@shared/schema";
 import { ZodError } from "zod";
+import "express-session";
+
+// Extend Express Request type to include session
+declare module "express-session" {
+  interface SessionData {
+    creatorId?: number;
+  }
+}
 
 // Authentication middleware
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,19 +6,19 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
+    --background: 240 20% 99%;
     --foreground: 222 47% 11%;
     
-    --primary: 160 84% 39%;
+    --primary: 260 80% 50%;
     --primary-foreground: 210 40% 98%;
     
-    --secondary: 38 92% 50%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 230 80% 60%;
+    --secondary-foreground: 210 40% 98%;
     
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
     
-    --accent: 210 40% 96.1%;
+    --accent: 260 80% 90%;
     --accent-foreground: 222.2 47.4% 11.2%;
     
     --destructive: 0 84% 60%;
@@ -32,7 +32,7 @@
     
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 160 84% 39%;
+    --ring: 260 80% 50%;
     
     --radius: 0.5rem;
   }
@@ -42,37 +42,59 @@
   }
   
   body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
     @apply bg-background text-foreground;
   }
 
   /* Custom project colors */
   :root {
-    --primary: #10B981;
-    --secondary: #FBBF24;
-    --background: #F9FAFB;
-    --text-primary: #1F2A44;
-    --text-secondary: #6B7280;
-    --error: #F87171;
-    --border: #E5E7EB;
+    --primary: #6D28D9; /* Purple */
+    --primary-hover: #5B21B6;
+    --secondary: #3B82F6; /* Blue */
+    --secondary-hover: #2563EB;
+    --accent: #C4B5FD; /* Light purple */
+    --gradient-start: #6D28D9;
+    --gradient-end: #3B82F6;
+    --background: #F8F9FF;
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+    --error: #EF4444;
+    --border: #E2E8F0;
+    --success: #10B981;
   }
 }
 
 @layer components {
   .service-card {
-    @apply bg-white rounded-lg shadow-sm overflow-hidden border border-border transition-all duration-200;
+    @apply bg-white rounded-lg shadow-md overflow-hidden border border-border transition-all duration-300;
   }
   
   .service-card:hover {
-    @apply transform -translate-y-1 shadow-md;
+    @apply transform -translate-y-1 shadow-lg border-accent;
   }
   
   .btn-primary {
-    @apply bg-primary text-white rounded-md font-medium transition-all duration-200;
+    @apply bg-primary text-white rounded-md font-medium transition-all duration-200 px-4 py-2 hover:bg-[var(--primary-hover)];
   }
   
   .btn-primary:hover {
     @apply transform -translate-y-0.5 shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-white rounded-md font-medium transition-all duration-200 px-4 py-2 hover:bg-[var(--secondary-hover)];
+  }
+  
+  .btn-secondary:hover {
+    @apply transform -translate-y-0.5 shadow-md;
+  }
+  
+  .btn-outline {
+    @apply border border-primary text-primary bg-transparent rounded-md font-medium transition-all duration-200 px-4 py-2;
+  }
+  
+  .btn-outline:hover {
+    @apply bg-primary/10;
   }
 
   .fade-in {
@@ -85,10 +107,38 @@
   }
 
   .category-card {
-    @apply bg-white rounded-md border border-border p-3 text-center cursor-pointer transition-all hover:border-primary;
+    @apply bg-white rounded-lg border border-border p-4 text-center cursor-pointer transition-all hover:border-accent shadow-sm hover:shadow-md;
   }
 
   .category-icon {
-    @apply w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2;
+    @apply w-14 h-14 bg-gradient-to-br from-[var(--gradient-start)] to-[var(--gradient-end)] text-white rounded-full flex items-center justify-center mx-auto mb-3;
+  }
+  
+  .header {
+    @apply bg-white shadow-sm border-b border-border sticky top-0 z-50;
+  }
+  
+  .footer {
+    @apply bg-gray-50 border-t border-border mt-12;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] bg-clip-text text-transparent;
+  }
+  
+  .gradient-bg {
+    @apply bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)];
+  }
+  
+  .card {
+    @apply bg-white rounded-lg shadow-md p-6 border border-border;
+  }
+  
+  .section-title {
+    @apply text-2xl font-bold mb-6 text-[var(--text-primary)];
+  }
+  
+  .input-field {
+    @apply border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary w-full transition-all;
   }
 }
