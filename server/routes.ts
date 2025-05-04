@@ -140,6 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: data.name,
         serviceType: data.serviceType,
         phone: data.phone,
+        country: data.country || "Liberia",
         county: data.county,
         city: data.city,
         community: data.community,

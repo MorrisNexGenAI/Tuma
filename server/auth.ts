@@ -1,20 +1,35 @@
 import { storage } from "./storage";
 import { CreatorRegistration } from "@shared/schema";
-import * as crypto from "crypto";
+import * as bcrypt from "bcrypt";
+import * as crypto from "crypto"; // Keep for backward compatibility
 
 class Auth {
-  // Hash password (simple hash for MVP)
+  // Hash password using bcrypt - more secure
   private hashPassword(password: string): string {
-    return crypto
-      .createHash("sha256")
-      .update(password)
-      .digest("hex");
+    // For new passwords, use bcrypt
+    if (password.length < 50) { // Plain passwords will be shorter than hashed ones
+      const saltRounds = 10;
+      return bcrypt.hashSync(password, saltRounds);
+    }
+    
+    // Return as is if it's already a hash (for backward compatibility)
+    return password;
   }
 
-  // Verify password
+  // Verify password with bcrypt or fallback to legacy hashing
   private verifyPassword(password: string, hashedPassword: string): boolean {
-    const passwordHash = this.hashPassword(password);
-    return passwordHash === hashedPassword;
+    // Try bcrypt first (for new passwords)
+    try {
+      if (hashedPassword.startsWith('$2b$') || hashedPassword.startsWith('$2a$')) {
+        return bcrypt.compareSync(password, hashedPassword);
+      }
+    } catch (err) {
+      console.log("Bcrypt verification failed, trying legacy method", err);
+    }
+    
+    // Fallback to legacy method (sha256)
+    const legacyHash = crypto.createHash("sha256").update(password).digest("hex");
+    return legacyHash === hashedPassword;
   }
 
   // Register creator and service
@@ -30,7 +45,7 @@ class Auth {
       name: data.serviceName,
       phone: data.phone,
       serviceType: data.serviceType,
-      country: "Liberia", // Hardcoded for Liberia
+      country: data.country || "Liberia", // Use provided country or default to Liberia
       county: data.county,
       city: data.city,
       community: data.community,
