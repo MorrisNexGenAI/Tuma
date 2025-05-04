@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 222 47% 11%;
+    
+    --primary: 160 84% 39%;
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: 38 92% 50%;
+    --secondary-foreground: 222 47% 11%;
+    
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+    
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 160 84% 39%;
+    
+    --radius: 0.5rem;
+  }
+  
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    @apply bg-background text-foreground;
+  }
+
+  /* Custom project colors */
+  :root {
+    --primary: #10B981;
+    --secondary: #FBBF24;
+    --background: #F9FAFB;
+    --text-primary: #1F2A44;
+    --text-secondary: #6B7280;
+    --error: #F87171;
+    --border: #E5E7EB;
+  }
+}
+
+@layer components {
+  .service-card {
+    @apply bg-white rounded-lg shadow-sm overflow-hidden border border-border transition-all duration-200;
+  }
+  
+  .service-card:hover {
+    @apply transform -translate-y-1 shadow-md;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white rounded-md font-medium transition-all duration-200;
+  }
+  
+  .btn-primary:hover {
+    @apply transform -translate-y-0.5 shadow-md;
+  }
+
+  .fade-in {
+    animation: fadeIn 0.5s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  .category-card {
+    @apply bg-white rounded-md border border-border p-3 text-center cursor-pointer transition-all hover:border-primary;
+  }
+
+  .category-icon {
+    @apply w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2;
+  }
+}
