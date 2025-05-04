@@ -7,11 +7,13 @@ import { ZodError } from "zod";
 import "express-session";
 import { UploadedFile } from "express-fileupload";
 import { handleFileUpload, handleMultipleFileUploads, ensureUploadsDir } from "./uploads";
+import { adminRouter } from "./admin-routes";
 
 // Extend Express Request type to include session
 declare module "express-session" {
   interface SessionData {
     creatorId?: number;
+    adminId?: number;
   }
 }
 
@@ -24,6 +26,8 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Mount the admin router
+  app.use('/api/admin', adminRouter);
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {
