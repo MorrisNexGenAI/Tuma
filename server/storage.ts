@@ -564,8 +564,15 @@ class Storage {
     // Set the last updated timestamp
     const lastUpdated = new Date().toISOString();
     
+    // Convert boolean available to number if provided
+    const convertedData: Record<string, any> = { ...data, lastUpdated };
+    
+    if (typeof data.available === 'boolean') {
+      convertedData.available = data.available ? 1 : 0;
+    }
+    
     await db.update(services)
-      .set({ ...data, lastUpdated })
+      .set(convertedData)
       .where(eq(services.id, id));
       
     return this.getServiceById(id);

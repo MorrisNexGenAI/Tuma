@@ -8,6 +8,7 @@ import SearchResults from "@/pages/SearchResults";
 import CreatorSignup from "@/pages/CreatorSignup";
 import CreatorLogin from "@/pages/CreatorLogin";
 import CreatorPortal from "@/pages/CreatorPortal";
+import CreatorProfile from "@/pages/CreatorProfile";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -22,6 +23,7 @@ function Router() {
           <Route path="/creator/signup" component={CreatorSignup} />
           <Route path="/creator/login" component={CreatorLogin} />
           <Route path="/creator/portal" component={CreatorPortal} />
+          <Route path="/creators/:id" component={CreatorProfile} />
           <Route component={NotFound} />
         </Switch>
       </main>

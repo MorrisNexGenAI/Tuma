@@ -431,6 +431,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get services by location" });
     }
   });
+  
+  // Advanced search with filters and pagination
+  app.get("/api/search/advanced", async (req, res) => {
+    try {
+      const { 
+        q = "", 
+        county, 
+        city, 
+        serviceType, 
+        available, 
+        sort, 
+        page,
+        limit
+      } = req.query;
+      
+      const query = typeof q === 'string' ? q : '';
+      
+      // Convert query parameters to appropriate types
+      const filters: Record<string, any> = {};
+      
+      if (county && typeof county === 'string') filters.county = county;
+      if (city && typeof city === 'string') filters.city = city;
+      if (serviceType && typeof serviceType === 'string') filters.serviceType = serviceType;
+      if (available !== undefined) filters.available = available === 'true';
+      if (sort && typeof sort === 'string') filters.sort = sort;
+      if (page) filters.page = parseInt(page as string) || 1;
+      if (limit) filters.limit = parseInt(limit as string) || 12;
+      
+      const results = await storage.advancedSearch(query, filters);
+      res.status(200).json(results);
+    } catch (error) {
+      console.error("Advanced search error:", error);
+      res.status(500).json({ message: "Failed to perform advanced search" });
+    }
+  });
+  
+  // Get creator profile by ID
+  app.get("/api/creators/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const creatorId = parseInt(id);
+      
+      if (isNaN(creatorId)) {
+        return res.status(400).json({ message: "Invalid creator ID" });
+      }
+      
+      const profile = await storage.getCreatorProfile(creatorId);
+      
+      if (!profile) {
+        return res.status(404).json({ message: "Creator not found" });
+      }
+      
+      res.status(200).json(profile);
+    } catch (error) {
+      console.error("Get creator error:", error);
+      res.status(500).json({ message: "Failed to get creator profile" });
+    }
+  });
+  
+  // Update service details (for detailed descriptions)
+  app.patch("/api/services/:id/details", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const serviceId = parseInt(id);
+      
+      if (isNaN(serviceId)) {
+        return res.status(400).json({ message: "Invalid service ID" });
+      }
+      
+      // Get the service to check ownership
+      const service = await storage.getServiceById(serviceId);
+      
+      if (!service) {
+        return res.status(404).json({ message: "Service not found" });
+      }
+      
+      if (service.creatorId !== req.session.creatorId) {
+        return res.status(403).json({ message: "You don't have permission to update this service" });
+      }
+      
+      // Handle image uploads if present
+      let updatedData: Partial<schema.ExtendedServiceUpdate> = { ...req.body };
+      
+      if (req.files && Object.keys(req.files).length > 0) {
+        if (req.files.images) {
+          const images = req.files.images;
+          const imageFiles = Array.isArray(images) ? images : [images];
+          
+          // Limit to 3 images
+          const limitedImageFiles = imageFiles.slice(0, 3);
+          
+          const uploadedImages = await handleMultipleFileUploads(limitedImageFiles);
+          updatedData.images = JSON.stringify(uploadedImages);
+        }
+      }
+      
+      // Update the service details
+      const updatedService = await storage.updateServiceDetails(serviceId, updatedData);
+      
+      res.status(200).json(updatedService);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      }
+      console.error("Update service details error:", error);
+      res.status(500).json({ message: "Failed to update service details" });
+    }
+  });
+  
+  // Toggle service availability
+  app.post("/api/services/:id/toggle-availability", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const serviceId = parseInt(id);
+      
+      if (isNaN(serviceId)) {
+        return res.status(400).json({ message: "Invalid service ID" });
+      }
+      
+      // Get the service to check ownership
+      const service = await storage.getServiceById(serviceId);
+      
+      if (!service) {
+        return res.status(404).json({ message: "Service not found" });
+      }
+      
+      if (service.creatorId !== req.session.creatorId) {
+        return res.status(403).json({ message: "You don't have permission to update this service" });
+      }
+      
+      // Toggle availability
+      const updatedService = await storage.toggleServiceAvailability(serviceId);
+      
+      res.status(200).json(updatedService);
+    } catch (error) {
+      console.error("Toggle availability error:", error);
+      res.status(500).json({ message: "Failed to toggle service availability" });
+    }
+  });
 
   const httpServer = createServer(app);
 
