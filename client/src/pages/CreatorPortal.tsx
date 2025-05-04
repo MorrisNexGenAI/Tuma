@@ -11,8 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Service } from "@shared/schema";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Camera, Upload, User } from "lucide-react";
+import ImageUploader from "@/components/ImageUploader";
+import DescriptionEditor from "@/components/DescriptionEditor";
 
 // Form validation schema
 const serviceUpdateSchema = z.object({
@@ -23,6 +28,7 @@ const serviceUpdateSchema = z.object({
   city: z.string().min(1, "Please select a city"),
   community: z.string().min(1, "Community/area is required"),
   operatingHours: z.string().optional(),
+  description: z.string().optional(),
   available: z.boolean().default(true),
 });
 
@@ -39,6 +45,12 @@ const CreatorPortal = () => {
     queryKey: ["/api/services/me"],
   });
 
+  // State for service images
+  const [serviceImages, setServiceImages] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  
   // Initialize form with service data
   const form = useForm<ServiceUpdateFormValues>({
     resolver: zodResolver(serviceUpdateSchema),
@@ -50,6 +62,7 @@ const CreatorPortal = () => {
       city: "",
       community: "",
       operatingHours: "",
+      description: "",
       available: true,
     },
   });
@@ -65,8 +78,26 @@ const CreatorPortal = () => {
         city: service.city,
         community: service.community,
         operatingHours: service.operatingHours || "",
+        description: service.description || "",
         available: service.available === 1,
       });
+      
+      // Set existing images if available
+      if (service.images) {
+        try {
+          const imageArray = JSON.parse(service.images);
+          if (Array.isArray(imageArray)) {
+            setExistingImages(imageArray);
+          }
+        } catch (e) {
+          console.error("Error parsing service images:", e);
+        }
+      }
+      
+      // Set profile image if available
+      if (service.profileImage) {
+        setProfileImageUrl(service.profileImage);
+      }
     }
   }, [service, form]);
 
@@ -114,10 +145,119 @@ const CreatorPortal = () => {
     },
   });
 
+  // Image upload methods
+  const uploadServiceImages = async () => {
+    if (!serviceImages.length) return [];
+    
+    const formData = new FormData();
+    serviceImages.forEach(file => {
+      formData.append('files', file);
+    });
+    
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload service images');
+      }
+      
+      const result = await response.json();
+      return result.files;
+    } catch (error) {
+      console.error("Error uploading service images:", error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload service images. Please try again.",
+        variant: "destructive"
+      });
+      return [];
+    }
+  };
+  
+  const uploadProfileImage = async () => {
+    if (!profileImage) return null;
+    
+    const formData = new FormData();
+    formData.append('file', profileImage);
+    
+    try {
+      const response = await fetch('/api/upload/profile', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload profile image');
+      }
+      
+      const result = await response.json();
+      return result.file;
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload profile image. Please try again.",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+  
+  // Handle description change
+  const handleDescriptionChange = (description: string) => {
+    form.setValue("description", description);
+  };
+  
   // Handle form submission
-  const onSubmit = (data: ServiceUpdateFormValues) => {
+  const onSubmit = async (data: ServiceUpdateFormValues) => {
     setIsUpdating(true);
-    updateServiceMutation.mutate(data);
+    
+    try {
+      // Upload images if any
+      let uploadedServiceImages: string[] = [];
+      let uploadedProfileImage: string | null = null;
+      
+      if (serviceImages.length > 0) {
+        uploadedServiceImages = await uploadServiceImages();
+      }
+      
+      if (profileImage) {
+        uploadedProfileImage = await uploadProfileImage();
+      }
+      
+      // Prepare data with images
+      const updatedData = {
+        ...data,
+        images: JSON.stringify([...existingImages, ...uploadedServiceImages]),
+      };
+      
+      // If profile image was uploaded, add it to request
+      if (uploadedProfileImage) {
+        await apiRequest("PUT", `/api/creator/profile`, {
+          profileImage: uploadedProfileImage
+        });
+      }
+      
+      // Update service data
+      await updateServiceMutation.mutateAsync(updatedData);
+      
+      // Reset image states after successful upload
+      setServiceImages([]);
+      setProfileImage(null);
+      
+    } catch (error) {
+      console.error("Error updating service:", error);
+      toast({
+        title: "Update failed",
+        description: "An error occurred while updating your service.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   // Handle availability toggle
@@ -333,10 +473,121 @@ const CreatorPortal = () => {
               )}
             />
             
-            <div className="pt-2 flex space-x-3">
+            {/* Tabs for Media and Description */}
+            <Tabs defaultValue="photos" className="w-full mt-6">
+              <TabsList className="grid w-full grid-cols-2 mb-2">
+                <TabsTrigger value="photos" className="text-sm">
+                  <Camera className="w-4 h-4 mr-2" /> Photos
+                </TabsTrigger>
+                <TabsTrigger value="description" className="text-sm">
+                  Description
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="photos" className="space-y-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Service Images</CardTitle>
+                    <CardDescription>
+                      Upload up to 3 photos of your service
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ImageUploader
+                      maxFiles={3}
+                      existingImages={existingImages}
+                      onImagesSelected={setServiceImages}
+                    />
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Profile Image</CardTitle>
+                    <CardDescription>
+                      Upload your profile or business logo
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center space-x-5">
+                      <div className="relative h-20 w-20 overflow-hidden rounded-full bg-background">
+                        {profileImageUrl ? (
+                          <img 
+                            src={profileImageUrl} 
+                            alt="Profile" 
+                            className="h-full w-full object-cover"
+                          />
+                        ) : profileImage ? (
+                          <img 
+                            src={URL.createObjectURL(profileImage)} 
+                            alt="Profile" 
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                            <User className="h-8 w-8 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <label 
+                          htmlFor="profile-upload" 
+                          className="flex cursor-pointer items-center rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-background"
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          {profileImage || profileImageUrl ? "Change Photo" : "Upload Photo"}
+                        </label>
+                        <input 
+                          id="profile-upload" 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setProfileImage(file);
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="description">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Service Description</CardTitle>
+                    <CardDescription>
+                      Provide detailed information about your service
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <DescriptionEditor
+                            initialValue={field.value || ""}
+                            onSave={handleDescriptionChange}
+                            placeholder="Describe your service in detail (e.g., '3 bedrooms with kitchen', 'Open area restaurant with garden seating')"
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+            
+            <div className="pt-4 flex space-x-3">
               <Button 
                 type="submit" 
-                className="btn-primary flex-1 py-3 px-4"
+                className="gradient-bg text-white flex-1 py-3 px-4"
                 disabled={isUpdating}
               >
                 {isUpdating ? "Updating..." : "Update Service"}
