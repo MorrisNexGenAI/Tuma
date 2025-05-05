@@ -40,7 +40,7 @@ const Footer = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4 text-primary">About Tuma</h3>
-              <p className="text-text-secondary mb-4">
+              <p className="text-gray-700 mb-4">
                 Tuma helps you find local services in Liberia, connecting you with rooms, restaurants, 
                 barbershops, salons and more across the country.
               </p>
@@ -69,19 +69,19 @@ const Footer = () => {
             <div>
               <h3 className="text-xl font-bold mb-4 text-primary">Categories</h3>
               <div className="grid grid-cols-2 gap-3">
-                <Link href="/?category=Room" className="flex items-center p-2 rounded-md hover:bg-primary/5 text-text-primary">
+                <Link href="/?category=Room" className="flex items-center p-2 rounded-md hover:bg-primary/5 text-gray-700">
                   <HomeIcon className="w-5 h-5 mr-2 text-primary" />
                   <span>Rooms</span>
                 </Link>
-                <Link href="/?category=Restaurant" className="flex items-center p-2 rounded-md hover:bg-primary/5 text-text-primary">
+                <Link href="/?category=Restaurant" className="flex items-center p-2 rounded-md hover:bg-primary/5 text-gray-700">
                   <Utensils className="w-5 h-5 mr-2 text-primary" />
                   <span>Restaurants</span>
                 </Link>
-                <Link href="/?category=Barbershop" className="flex items-center p-2 rounded-md hover:bg-primary/5 text-text-primary">
+                <Link href="/?category=Barbershop" className="flex items-center p-2 rounded-md hover:bg-primary/5 text-gray-700">
                   <Scissors className="w-5 h-5 mr-2 text-primary" />
                   <span>Barbershops</span>
                 </Link>
-                <Link href="/?category=Salon" className="flex items-center p-2 rounded-md hover:bg-primary/5 text-text-primary">
+                <Link href="/?category=Salon" className="flex items-center p-2 rounded-md hover:bg-primary/5 text-gray-700">
                   <Sparkles className="w-5 h-5 mr-2 text-primary" />
                   <span>Salons</span>
                 </Link>
@@ -91,19 +91,19 @@ const Footer = () => {
             <div>
               <h3 className="text-xl font-bold mb-4 text-primary">Featured Locations</h3>
               <ul className="space-y-3">
-                <li className="flex items-center text-text-primary">
+                <li className="flex items-center text-gray-700">
                   <MapPin className="h-4 w-4 mr-2 text-primary" />
                   <span>Tubmanburg, Bomi County</span>
                 </li>
-                <li className="flex items-center text-text-primary">
+                <li className="flex items-center text-gray-700">
                   <MapPin className="h-4 w-4 mr-2 text-primary" />
                   <span>Kakata, Margibi County</span>
                 </li>
-                <li className="flex items-center text-text-primary">
+                <li className="flex items-center text-gray-700">
                   <MapPin className="h-4 w-4 mr-2 text-primary" />
                   <span>Monrovia, Montserrado County</span>
                 </li>
-                <li className="flex items-center text-text-primary">
+                <li className="flex items-center text-gray-700">
                   <MapPin className="h-4 w-4 mr-2 text-primary" />
                   <span>Buchanan, Grand Bassa County</span>
                 </li>
@@ -112,8 +112,8 @@ const Footer = () => {
           </div>
           
           <div className="border-t border-gray-200 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-text-secondary text-sm">&copy; {new Date().getFullYear()} Tuma. All rights reserved.</p>
-            <div className="mt-4 md:mt-0 flex space-x-6 text-sm text-text-secondary">
+            <p className="text-gray-600 text-sm">&copy; {new Date().getFullYear()} Tuma. All rights reserved.</p>
+            <div className="mt-4 md:mt-0 flex space-x-6 text-sm text-gray-600">
               <Link href="/" className="hover:text-primary">Privacy Policy</Link>
               <Link href="/" className="hover:text-primary">Terms of Service</Link>
               <Link href="/" className="hover:text-primary">Contact Us</Link>
