@@ -19,8 +19,16 @@ declare module "express-session" {
 
 // Authentication middleware
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-  if (!req.session || !req.session.creatorId) {
+  if (!req.session || (!req.session.creatorId && !req.session.adminId)) {
     return res.status(401).json({ message: "Unauthorized. Please log in." });
+  }
+  next();
+};
+
+// Admin authentication middleware
+const requireAdminAuth = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.session || !req.session.adminId) {
+    return res.status(403).json({ message: "Admin access required" });
   }
   next();
 };
@@ -32,12 +40,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const data = schema.creatorLoginSchema.parse(req.body);
-      const creator = await auth.login(data.phone, data.password);
+      const user = await auth.login(data.phone, data.password);
       
-      // Set creator ID in session
-      req.session.creatorId = creator.id;
-      
-      res.status(200).json({ message: "Login successful" });
+      // Check if this is an admin or a creator
+      if (user.isAdmin) {
+        // Set admin ID in session
+        req.session.adminId = user.id;
+        req.session.creatorId = undefined; // Clear creator ID if present
+        
+        res.status(200).json({ 
+          message: "Admin login successful",
+          isAdmin: true,
+          user: {
+            id: user.id,
+            fullName: user.fullName,
+            phone: user.phone,
+          }
+        });
+      } else {
+        // Set creator ID in session
+        req.session.creatorId = user.id;
+        req.session.adminId = undefined; // Clear admin ID if present
+        
+        res.status(200).json({ 
+          message: "Login successful",
+          isAdmin: false,
+          user: {
+            id: user.id,
+            phone: user.phone
+          }
+        });
+      }
     } catch (error) {
       if (error instanceof ZodError) {
         return res.status(400).json({ message: "Invalid input", errors: error.errors });
@@ -58,8 +91,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/status", (req, res) => {
-    const isLoggedIn = !!req.session.creatorId;
-    res.status(200).json({ isLoggedIn });
+    const isLoggedIn = !!(req.session.creatorId || req.session.adminId);
+    const isAdmin = !!req.session.adminId;
+    
+    res.status(200).json({ 
+      isLoggedIn,
+      isAdmin,
+      userId: isAdmin ? req.session.adminId : req.session.creatorId
+    });
   });
 
   // Creators routes

@@ -56,19 +56,47 @@ class Auth {
     return creator;
   }
 
-  // Login creator
+  // Login creator or admin
   async login(phone: string, password: string) {
+    // First check if it's an admin
+    try {
+      const admin = await storage.getAdminByPhone(phone);
+      
+      if (admin) {
+        // Verify admin PIN using SHA-256 (matching the hash in create-admin.ts)
+        const hashedPin = crypto.createHash("sha256").update(password).digest("hex");
+        
+        if (admin.pin === hashedPin) {
+          // Update admin's last login time
+          await storage.updateAdminLastLogin(admin.id);
+          
+          // Return admin with a special flag to identify them
+          return {
+            ...admin,
+            isAdmin: true
+          };
+        }
+      }
+    } catch (err) {
+      console.error("Error checking for admin login:", err);
+      // Continue to creator login flow if admin check fails
+    }
+    
+    // If not an admin, try creator login
     const creator = await storage.getCreatorByPhone(phone);
     
     if (!creator) {
-      throw new Error("Creator not found");
+      throw new Error("Account not found");
     }
     
     if (!this.verifyPassword(password, creator.password)) {
       throw new Error("Invalid password");
     }
     
-    return creator;
+    return {
+      ...creator,
+      isAdmin: false
+    };
   }
 }
 
