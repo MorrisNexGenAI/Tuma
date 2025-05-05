@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,20 +9,31 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Lock, Phone, ArrowRight } from "lucide-react";
+import { Lock, Phone, ArrowRight, ShieldCheck } from "lucide-react";
 
 // Form validation schema
 const loginSchema = z.object({
   phone: z.string().min(1, "Phone number is required"),
-  password: z.string().min(1, "Password is required"),
+  password: z.string().min(1, "Password/PIN is required"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-const CreatorLogin = () => {
+interface LoginResponse {
+  message: string;
+  isAdmin: boolean;
+  user: {
+    id: number;
+    phone: string;
+    fullName?: string;
+  };
+}
+
+const Login = () => {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
   // Initialize form
   const form = useForm<LoginFormValues>({
@@ -36,23 +47,39 @@ const CreatorLogin = () => {
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: async (data: LoginFormValues) => {
-      return apiRequest("POST", "/api/auth/login", data);
+      const response = await apiRequest("POST", "/api/auth/login", data);
+      return response.json() as Promise<LoginResponse>;
     },
-    onSuccess: () => {
-      toast({
-        title: "Login successful",
-        description: "Welcome back to your service dashboard.",
-      });
-      navigate("/creator/portal");
+    onSuccess: (data) => {
+      // Invalidate and refetch auth status after login
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/status"] });
+      
+      // Route based on user type
+      if (data.isAdmin) {
+        toast({
+          title: "Admin login successful",
+          description: `Welcome back, ${data.user.fullName || 'Admin'}.`,
+        });
+        navigate("/admin/dashboard");
+      } else {
+        toast({
+          title: "Login successful",
+          description: "Welcome back to your service dashboard.",
+        });
+        navigate("/creator/portal");
+      }
     },
     onError: (error: Error) => {
       toast({
         title: "Login failed",
-        description: error.message || "Invalid phone number or password.",
+        description: error.message || "Invalid phone number or password/PIN.",
         variant: "destructive",
       });
       setIsSubmitting(false);
     },
+    onSettled: () => {
+      setIsSubmitting(false);
+    }
   });
 
   // Handle form submission
@@ -68,8 +95,8 @@ const CreatorLogin = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full mb-4">
             <Lock className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-text-primary">Service Provider Login</h1>
-          <p className="text-text-secondary mt-2">Access your service dashboard</p>
+          <h1 className="text-2xl font-bold text-gray-800">Tuma Login</h1>
+          <p className="text-gray-600 mt-2">Sign in to your account</p>
         </div>
         
         <Form {...form}>
@@ -79,7 +106,7 @@ const CreatorLogin = () => {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-text-secondary flex items-center">
+                  <FormLabel className="text-gray-700 flex items-center">
                     <Phone className="w-4 h-4 mr-2 text-primary" />
                     Phone Number
                   </FormLabel>
@@ -87,15 +114,15 @@ const CreatorLogin = () => {
                     <div className="relative">
                       <Input
                         type="tel"
-                        placeholder="+231 xx xxx xxxx"
-                        className="p-3 pl-9 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                        placeholder="0770 123 456"
+                        className="p-3 pl-9 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                         {...field}
                       />
-                      <Phone className="absolute top-1/2 left-3 transform -translate-y-1/2 w-4 h-4 text-text-secondary" />
+                      <Phone className="absolute top-1/2 left-3 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
                     </div>
                   </FormControl>
-                  <FormDescription className="text-xs">
-                    Enter the phone number you used during registration
+                  <FormDescription className="text-xs text-gray-500">
+                    Enter your registered phone number
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -107,21 +134,25 @@ const CreatorLogin = () => {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-text-secondary flex items-center">
+                  <FormLabel className="text-gray-700 flex items-center">
                     <Lock className="w-4 h-4 mr-2 text-primary" />
-                    Password
+                    Password/PIN
                   </FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
                         type="password"
-                        placeholder="Enter your password"
-                        className="p-3 pl-9 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                        placeholder="Enter your password or PIN"
+                        className="p-3 pl-9 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                         {...field}
                       />
-                      <Lock className="absolute top-1/2 left-3 transform -translate-y-1/2 w-4 h-4 text-text-secondary" />
+                      <Lock className="absolute top-1/2 left-3 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
                     </div>
                   </FormControl>
+                  <FormDescription className="text-xs text-gray-500 flex items-center mt-1">
+                    <ShieldCheck className="w-3 h-3 mr-1 text-primary" />
+                    Service providers use password, admins use PIN
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -148,7 +179,7 @@ const CreatorLogin = () => {
               )}
             </Button>
             
-            <div className="text-center text-sm text-text-secondary pt-2">
+            <div className="text-center text-sm text-gray-600 pt-2">
               <p>Don't have an account?</p>
               <Button 
                 variant="link" 
@@ -165,4 +196,4 @@ const CreatorLogin = () => {
   );
 };
 
-export default CreatorLogin;
+export default Login;
