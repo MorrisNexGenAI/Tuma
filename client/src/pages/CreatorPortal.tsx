@@ -70,7 +70,7 @@ const CreatorPortal = () => {
   });
 
   // Get creator profile
-  const { data: creator } = useQuery({
+  const { data: creator } = useQuery<{ profileImage?: string }>({
     queryKey: ["/api/creator/profile"],
     enabled: !!service,
   });

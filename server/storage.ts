@@ -86,11 +86,11 @@ class Storage {
     
     // Apply filters
     if (category) {
-      query = query.where(eq(services.serviceType, category));
+      query = query.where(and(eq(services.serviceType, category)));
     }
     
     if (availableOnly) {
-      query = query.where(eq(services.available, 1));
+      query = query.where(and(eq(services.available, 1)));
     }
     
     // Apply sorting
@@ -755,7 +755,7 @@ class Storage {
         : Object.entries(viewsByDay)
             .filter(([date]) => date >= startDateStr)
             .reduce((acc, [date, views]) => {
-              acc[date] = views;
+              acc[date] = views as number;
               return acc;
             }, {} as Record<string, number>);
       

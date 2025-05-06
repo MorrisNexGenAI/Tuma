@@ -150,14 +150,14 @@ const Home = () => {
             <div className="max-w-5xl mx-auto">
               <div className="flex flex-col md:flex-row items-center">
                 <div className="w-full md:w-3/5 mb-8 md:mb-0">
-                  <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs rounded-full mb-4">
+                  <span className="inline-block px-3 py-1 bg-white/30 backdrop-blur-sm text-white text-xs rounded-full mb-4 shadow-sm">
                     The #1 Service Directory in Liberia
                   </span>
-                  <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
-                    Find Local Services <br />
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight text-shadow-sm bg-black/15 p-2 rounded-lg inline-block">
+                    Find Local Services <br className="hidden sm:block" />
                     Across <span className="text-white">Liberia</span>
                   </h1>
-                  <p className="text-white/90 text-lg mb-8 max-w-md">
+                  <p className="text-white text-sm sm:text-base md:text-lg mb-6 md:mb-8 max-w-md bg-black/20 p-2 rounded-lg shadow-sm">
                     Discover rooms, restaurants, barbershops and more in Tubmanburg, Monrovia and other regions.
                   </p>
                   

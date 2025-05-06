@@ -17,9 +17,11 @@ const Footer = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center mb-8">
             <div className="mb-6 md:mb-0 text-center md:text-left">
-              <h2 className="text-3xl font-bold mb-2 flex items-center justify-center md:justify-start text-white">
-                <span>Tuma</span>
-                <MapPin className="ml-1 h-6 w-6" />
+              <h2 className="text-3xl font-bold mb-2 flex items-center justify-center md:justify-start text-white text-shadow-md">
+                <span className="bg-black/30 px-3 py-1 rounded-lg flex items-center">
+                  Tuma
+                  <MapPin className="ml-1 h-6 w-6" />
+                </span>
               </h2>
               <p className="text-white max-w-md bg-black/20 px-3 py-2 rounded-lg">
                 Discover local services across Liberia - easily connect with
@@ -30,7 +32,7 @@ const Footer = () => {
             <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6 items-center">
               <div className="flex items-center text-white bg-black/20 px-3 py-1 rounded-md">
                 <Phone className="h-5 w-5 mr-2" />
-                <span>+231 770 123 456</span>
+                <span>+231 770 410579</span>
               </div>
               <div className="flex items-center text-white bg-black/20 px-3 py-1 rounded-md">
                 <Mail className="h-5 w-5 mr-2" />
@@ -38,7 +40,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center text-white bg-black/20 px-3 py-1 rounded-md">
                 <Globe className="h-5 w-5 mr-2" />
-                <span>www.tuma.com</span>
+                <span>https://tuma-1.onrender.com</span>
               </div>
             </div>
           </div>
