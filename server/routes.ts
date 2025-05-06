@@ -8,6 +8,10 @@ import "express-session";
 import { UploadedFile } from "express-fileupload";
 import { handleFileUpload, handleMultipleFileUploads, ensureUploadsDir } from "./uploads";
 import { adminRouter } from "./admin-routes";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 // Extend Express Request type to include session
 declare module "express-session" {

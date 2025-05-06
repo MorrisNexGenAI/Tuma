@@ -9,7 +9,9 @@ dotenv.config();
 
 // Function to hash a PIN
 function hashPin(pin: string): string {
-  return createHash('sha256').update(pin).digest('hex');
+  // Use salt from environment variables or default
+  const salt = process.env.ADMIN_PIN_SALT || "tumaAdminSalt";
+  return createHash('sha256').update(pin + salt).digest('hex');
 }
 
 async function createAdmin() {
