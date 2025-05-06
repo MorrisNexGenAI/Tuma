@@ -1,25 +1,45 @@
 {
-  "include": ["client/src/**/*", "db/**/*", "server/**/*"],
-  "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
+  "include": [
+    "client/**/*",
+    "server/**/*",
+    "db/**/*",
+    "shared/**/*",
+    "attached_assets/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts"
+  ],
   "compilerOptions": {
+    // Build options
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
-    "noEmit": true,
-    "module": "ESNext",
-    "strict": true,
-    "lib": ["esnext", "dom", "dom.iterable"],
-    "jsx": "preserve",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "allowImportingTsExtensions": true,
-    "moduleResolution": "bundler",
+    "noEmit": true, // Vite/esbuild handle emission, so no TS output
+
+    // Module settings
+    "module": "ESNext", // Use ES modules for Vite and Node.js
+    "moduleResolution": "Bundler", // Align with Vite's bundler resolution
+    "esModuleInterop": true, // Enable interop for CommonJS modules
+    "allowImportingTsExtensions": true, // Allow importing .ts/.tsx files
+
+    // Type checking
+    "strict": true, // Enable strict type checking
+    "skipLibCheck": true, // Skip checking library declarations
+    "lib": ["ESNext", "DOM", "DOM.Iterable"], // Support modern JS and browser APIs
+    "types": ["node", "vite/client"], // Include Node.js and Vite types
+
+    // JSX for React
+    "jsx": "preserve", // Preserve JSX for Vite's React plugin
+
+    // Path aliases (aligned with vite.config.ts)
     "baseUrl": ".",
-    "types": ["node", "vite/client"],
     "paths": {
-      "@db": ["./db/index.ts"],
-      "@db/*": ["./db/*"],
-      "@/*": ["./client/src/*"],
-      "@shared/*": ["./shared/*"]
+      "@db": ["db/index.ts"], // Single entry point for db
+      "@db/*": ["db/*"], // Wildcard for other db files
+      "@/*": ["client/src/*"], // Frontend source
+      "@shared/*": ["shared/*"], // Shared utilities/types
+      "@assets/*": ["attached_assets/*"] // Static assets
     }
   }
 }

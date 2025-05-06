@@ -15,7 +15,6 @@ export function log(message: string, source = "express") {
     second: "2-digit",
     hour12: true,
   });
-
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
@@ -68,7 +67,7 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  const distPath = path.resolve(import.meta.dirname, "../dist/public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -82,18 +81,3 @@ export function serveStatic(app: Express) {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
-
-const app = express();
-
-// Serve static files from the Vite build directory
-const staticPath = path.resolve(__dirname, "public");
-app.use(express.static(staticPath));
-
-// Fallback to index.html for SPA routing
-app.get("*", (req, res) => {
-  res.sendFile(path.join(staticPath, "index.html"));
-});
-
-app.listen(3000, () => {
-  console.log("Server is running on http://localhost:3000");
-});
