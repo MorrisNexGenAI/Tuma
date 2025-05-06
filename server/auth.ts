@@ -2,13 +2,18 @@ import { storage } from "./storage";
 import { CreatorRegistration } from "@shared/schema";
 import * as bcrypt from "bcrypt";
 import * as crypto from "crypto"; // Keep for backward compatibility
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 class Auth {
   // Hash password using bcrypt - more secure
   private hashPassword(password: string): string {
     // For new passwords, use bcrypt
     if (password.length < 50) { // Plain passwords will be shorter than hashed ones
-      const saltRounds = 10;
+      // Get salt rounds from environment or use default
+      const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS || "10", 10);
       return bcrypt.hashSync(password, saltRounds);
     }
     
@@ -27,8 +32,9 @@ class Auth {
       console.log("Bcrypt verification failed, trying legacy method", err);
     }
     
-    // Fallback to legacy method (sha256)
-    const legacyHash = crypto.createHash("sha256").update(password).digest("hex");
+    // Fallback to legacy method (sha256) with salt if available
+    const salt = process.env.LEGACY_PASSWORD_SALT || "";
+    const legacyHash = crypto.createHash("sha256").update(password + salt).digest("hex");
     return legacyHash === hashedPassword;
   }
 
@@ -63,8 +69,9 @@ class Auth {
       const admin = await storage.getAdminByPhone(phone);
       
       if (admin) {
-        // Verify admin PIN using SHA-256 (matching the hash in create-admin.ts)
-        const hashedPin = crypto.createHash("sha256").update(password).digest("hex");
+        // Verify admin PIN using SHA-256 with salt from environment variables
+        const salt = process.env.ADMIN_PIN_SALT || "tumaAdminSalt";
+        const hashedPin = crypto.createHash("sha256").update(password + salt).digest("hex");
         
         if (admin.pin === hashedPin) {
           // Update admin's last login time

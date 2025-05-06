@@ -3,13 +3,19 @@ import { storage } from "./storage";
 import { z } from "zod";
 import { adminLoginSchema, admins } from "@shared/schema";
 import { createHash } from "crypto";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 // Create an Express router
 export const adminRouter = Router();
 
 // Hash PIN for security
 function hashPin(pin: string): string {
-  return createHash("sha256").update(pin).digest("hex");
+  // Use salt from environment variables or default
+  const salt = process.env.ADMIN_PIN_SALT || "tumaAdminSalt";
+  return createHash("sha256").update(pin + salt).digest("hex");
 }
 
 // Middleware for admin authentication
