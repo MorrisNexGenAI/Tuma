@@ -3,11 +3,19 @@ import fileUpload, { UploadedFile } from 'express-fileupload';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 // Setup file upload middleware
 export const setupFileUpload = (app: any) => {
+  // Get upload directory from environment variables or use default
+  const uploadDir = process.env.UPLOAD_DIR 
+    ? path.resolve(process.env.UPLOAD_DIR) 
+    : path.join(process.cwd(), 'public', 'uploads');
+    
   // Create upload directory if it doesn't exist
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
@@ -30,7 +38,13 @@ export const handleFileUpload = (file: UploadedFile) => {
   // Generate unique filename
   const uniquePrefix = crypto.randomBytes(8).toString('hex');
   const fileName = `${uniquePrefix}-${file.name}`;
-  const uploadPath = path.join(process.cwd(), 'public', 'uploads', fileName);
+  
+  // Get upload directory from environment variables or use default
+  const uploadDir = process.env.UPLOAD_DIR 
+    ? path.resolve(process.env.UPLOAD_DIR) 
+    : path.join(process.cwd(), 'public', 'uploads');
+    
+  const uploadPath = path.join(uploadDir, fileName);
   
   // Move the file to the upload directory
   return new Promise<string>((resolve, reject) => {
@@ -67,7 +81,11 @@ export const handleMultipleFileUploads = async (files: UploadedFile | UploadedFi
 
 // Middleware to check if uploads directory exists
 export const ensureUploadsDir = (req: Request, res: Response, next: NextFunction) => {
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+  // Get upload directory from environment variables or use default
+  const uploadDir = process.env.UPLOAD_DIR 
+    ? path.resolve(process.env.UPLOAD_DIR)
+    : path.join(process.cwd(), 'public', 'uploads');
+    
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }

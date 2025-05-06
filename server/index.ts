@@ -6,6 +6,10 @@ import { setupVite, serveStatic, log } from "./vite";
 import { pool } from "../db";
 import { setupFileUpload } from "./uploads";
 import path from "path";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 app.use(express.json());
@@ -85,10 +89,9 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
+  // Get the port from environment variables or default to 5000
+  // The API and client are served on the same port
+  const port = parseInt(process.env.PORT || "5000", 10);
   server.listen({
     port,
     host: "0.0.0.0",
