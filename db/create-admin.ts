@@ -2,6 +2,10 @@ import { db } from "./index";
 import { admins } from "@shared/schema";
 import { createHash } from "crypto";
 import { eq } from "drizzle-orm";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 // Function to hash a PIN
 function hashPin(pin: string): string {
@@ -12,19 +16,24 @@ async function createAdmin() {
   try {
     console.log("Checking for existing admin account...");
     
-    // Check for existing admin (Morris D. Dawakai)
+    // Get admin details from environment variables
+    const adminPhone = process.env.ADMIN_PHONE || "0770410579";
+    const adminPin = process.env.ADMIN_PIN || "200817";
+    const adminName = process.env.ADMIN_NAME || "Morris D. Dawakai";
+    
+    // Check for existing admin
     const existingAdmin = await db.query.admins.findFirst({
-      where: eq(admins.phone, "0770410579"),
+      where: eq(admins.phone, adminPhone),
     });
     
     // Create admin if he doesn't exist
     if (!existingAdmin) {
-      console.log("Creating admin account for Morris D. Dawakai...");
+      console.log(`Creating admin account for ${adminName}...`);
       
       await db.insert(admins).values({
-        fullName: "Morris D. Dawakai",
-        phone: "0770410579",
-        pin: hashPin("200817"), // Hash the PIN for security
+        fullName: adminName,
+        phone: adminPhone,
+        pin: hashPin(adminPin), // Hash the PIN for security
         role: "admin",
         isActive: true,
         createdAt: new Date(),
